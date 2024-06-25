@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.utils import timezone
 # Create your models here.
 
@@ -51,7 +51,7 @@ class RentManager(models.Manager):
 
 
 class Rent(models.Model):
-    user = models.ForeignKey(AbstractUser, on_delete=models.CASCADE, verbose_name='Пользователь')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь')
     box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='Ящик')
     start = models.DateTimeField(verbose_name='Начало аренды')
     end = models.DateTimeField(verbose_name='Конец аренды')
