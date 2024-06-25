@@ -26,7 +26,7 @@ class BoxManager(models.Manager):
 
 class Box(models.Model):
     snumber = models.CharField(max_length=255, verbose_name='Номер ящика', unique=True, db_index=True)
-    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name='Склад')
+    storage = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name='Склад', related_name='boxes')
     area = models.FloatField(verbose_name='Площадь')
     dimensions = models.CharField(max_length=255, verbose_name='Размеры')
     price = models.FloatField(verbose_name='Цена')
