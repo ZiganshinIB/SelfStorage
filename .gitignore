@@ -122,7 +122,7 @@ env.bak/
 venv.bak/
 
 
-./selfstorage/images/*
+./selfstorage/images/
 *.7z
 config.py
 *.sqlite3
