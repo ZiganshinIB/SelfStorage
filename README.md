@@ -32,16 +32,18 @@ pip install -r requirements.txt
 nano .env
 ```
 И определите следующие переменые среды в этом файле
-DJANGO_DEBUG=true
-export DJANGO_ALLOWED_HOSTS=yourhostname.com,127.0.0.1
 ```shell
 export SECRET_KEY=django-insecure
 export DEBUG=false
 export ALLOWED_HOSTS=HOST_NAME,HOST_IP,...
 ```
-export SECRET_KEY=django-insecure
-export DEBUG=false
-export ALLOWED_HOSTS=HOST_NAME,HOST_IP,...
+где 
+- `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
+- `DEBUG` — дебаг-режим. Поставьте `False`.
+- `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
+- `EMAIL_HOST_USER` - почтовый ящик (*необходимо что бы было gmail)
+- `EMAIL_HOST_PASSWORD` - пароль от ПЯ 
+Кратко про то как получить данные EMAIL  https://www.codingforentrepreneurs.com/blog/sending-email-in-django-from-gmail/
 
 ### 5. Миграция базы данных
 ```shell
@@ -54,4 +56,20 @@ pyhton3 manage.py createsuperuser
 ### 7. Запуск проектка
 ```shell
 python3 manage.py runserver
+```
+
+# Допольнительно
+## Работа с ПЯ во `views.py`
+```Python3
+# импорт функции для отправки сообщении 
+from django.core.mail import send_mail 
+
+# Обычная отправка сообщении... 
+send_mail(
+    'Тема сообщения',
+    'Сообщение',
+    'отправитель@example.com',
+    ['получатель1@example.com', 'получатель2@example.com', ... ]
+)
+#...
 ```
