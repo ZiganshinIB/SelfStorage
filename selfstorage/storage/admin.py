@@ -1,6 +1,24 @@
 from django.contrib import admin
-from .models import Box, Rent, Storage, Address
 from django.db.models import Count, Min, Q
+
+from .models import Box, Rent, Storage, Address, Profile
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user_full_name', 'user_email', 'phone')
+    search_fields = ('user__email','phone', 'user__first_name', 'user__last_name')
+    ordering = ('user',)
+
+    def user_full_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}"
+
+    user_full_name.short_description = 'Польное имя'
+
+    def user_email(self, obj):
+        return obj.user.email
+
+    user_email.short_description = 'Почта'
 
 
 @admin.register(Address)
