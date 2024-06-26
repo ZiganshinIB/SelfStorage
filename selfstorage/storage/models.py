@@ -7,7 +7,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь', related_name='profile')
     photo = models.ImageField(upload_to='images/profile', verbose_name='Фото')
     phone = PhoneNumberField(
         verbose_name='телефон',
