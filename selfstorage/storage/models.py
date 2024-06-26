@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.conf import settings
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
@@ -7,13 +9,13 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь', related_name='profile')
-    photo = models.ImageField(upload_to='images/profile', verbose_name='Фото')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь',
+                                related_name='profile')
+    photo = models.ImageField(upload_to='images/profile', verbose_name='Фото', default='images/profile/default.jpg')
     phone = PhoneNumberField(
         verbose_name='телефон',
         region='RU',
-        db_index=True,
-        unique=True
+        null=True
     )
 
     def __str__(self):
@@ -79,18 +81,15 @@ class RentManager(models.Manager):
 
 class Rent(models.Model):
     RentStatus = (
-        (1, 'Необработан'),
-        (2, 'Подтверждена'),
-        (3, 'Отменена'),
-        (4, 'Aрендован'),
-        (5, 'Завершена'),
-        (6, 'Отменена'),
+        (1, 'Aрендован'),
+        (2, 'Завершена'),
+        (3, 'Просрочена'),
     )
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь')
     box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='Ящик')
     start = models.DateTimeField(verbose_name='Начало аренды', auto_now_add=True)
     end = models.DateTimeField(verbose_name='Конец аренды')
-    status = models.IntegerField(verbose_name='Статус', choices=RentStatus, default=1, )
+    status = models.IntegerField(verbose_name='Статус', choices=RentStatus, null=True)
 
     class Meta:
         verbose_name = 'Аренда'
@@ -98,3 +97,14 @@ class Rent(models.Model):
 
     def __str__(self):
         return self.user
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance,)
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
