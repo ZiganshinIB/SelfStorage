@@ -1,5 +1,5 @@
-django==4.2
-django-debug-toolbar~=4.4
+django==4.2.9
+django-debug-toolbar~=4.4.2
 pillow==10.3
 asgiref==3.8
 django-phonenumber-field
