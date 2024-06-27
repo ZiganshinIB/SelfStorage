@@ -36,10 +36,8 @@ class Storage(models.Model):
         verbose_name = 'Склад'
         verbose_name_plural = 'Склады'
 
-
-class BoxManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(is_active=True)
+    def __str__(self):
+        return '{} {}'.format(self.city, self.street)
 
 
 class Box(models.Model):
@@ -47,10 +45,8 @@ class Box(models.Model):
     storage = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name='Склад', related_name='boxes')
     area = models.FloatField(verbose_name='Площадь')
     dimensions = models.CharField(max_length=255, verbose_name='Размеры')
-    price = models.FloatField(verbose_name='Цена')
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена', default=0)
     is_active = models.BooleanField(verbose_name='Активен', default=True)
-
-    objects = BoxManager()
 
     class Meta:
         unique_together = [('snumber',)]
@@ -74,8 +70,11 @@ class Rent(models.Model):
         (2, 'Завершена'),
         (3, 'Просрочена'),
     )
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь')
-    box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='Ящик')
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Пользователь')
+    box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='Ящик', related_name='rents')
+    from_city = models.CharField(max_length=255, verbose_name='Город', blank=True)
+    from_street = models.CharField(max_length=255, verbose_name='Улица', blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена', default=0)
     start = models.DateTimeField(verbose_name='Начало аренды', auto_now_add=True)
     end = models.DateTimeField(verbose_name='Конец аренды')
     status = models.IntegerField(verbose_name='Статус', choices=RentStatus, null=True)
@@ -85,7 +84,7 @@ class Rent(models.Model):
         verbose_name_plural = 'Аренды'
 
     def __str__(self):
-        return self.user
+        return self.profile.user.last_name + ' ' + self.profile.user.first_name + ' ' + self.box.snumber
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -97,3 +96,14 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+
+@receiver(post_save, sender=Rent)
+def save_rent_box(sender, instance, **kwargs):
+    if instance.status == 1:
+        instance.box.is_active = False
+    if instance.status == 2:
+        instance.box.is_active = True
+    if instance.status == 3:
+        instance.box.is_active = False
+    instance.box.save()
