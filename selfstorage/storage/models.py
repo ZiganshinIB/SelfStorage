@@ -26,21 +26,10 @@ class Profile(models.Model):
         verbose_name_plural = 'Профили'
 
 
-class Address(models.Model):
-    city = models.CharField(max_length=255)
-    street = models.CharField(max_length=255)
-
-    class Meta:
-        verbose_name = 'Адрес'
-        verbose_name_plural = 'Адреса'
-
-    def __str__(self):
-        return f'{self.city}, {self.street}'
-
-
 class Storage(models.Model):
     photo = models.ImageField(upload_to='images', verbose_name='Фото')
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, verbose_name='Адрес')
+    city = models.CharField(max_length=255, verbose_name='Город', blank=True)
+    street = models.CharField(max_length=255, verbose_name='Улица', blank=True)
     temperature = models.FloatField(verbose_name='Температура')
 
     class Meta:

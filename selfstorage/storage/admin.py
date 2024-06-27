@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db.models import Count, Min, Q
 
-from .models import Box, Rent, Storage, Address, Profile
+from .models import Box, Rent, Storage, Profile
 
 
 @admin.register(Profile)
@@ -21,20 +21,10 @@ class ProfileAdmin(admin.ModelAdmin):
     user_email.short_description = 'Почта'
 
 
-@admin.register(Address)
-class AddressAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'city', 'street')
-    list_display_links = ('pk',)
-    list_filter = ('city',)
-    search_fields = ('city', 'street')
-    ordering = ('city', 'street')
-
-
 @admin.register(Storage)
 class StorageAdmin(admin.ModelAdmin):
-    list_display = ('address', 'temperature', 'free_boxes', 'count_boxes', 'min_price')
-    list_filter = ('address',)
-    search_fields = ('address',)
+    list_display = ('city', 'street', 'temperature', 'free_boxes', 'count_boxes', 'min_price')
+    search_fields = ('city', 'street',)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
