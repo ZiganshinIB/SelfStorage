@@ -9,3 +9,8 @@ def view_index(request):
 def view_boxes(request):
     '''Boxes page.'''
     return render(request, 'boxes.html')
+
+
+def view_account(request):
+    '''Account page.'''
+    return render(request, 'my-rent.html')
