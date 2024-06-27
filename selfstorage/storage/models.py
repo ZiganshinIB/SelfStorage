@@ -1,9 +1,12 @@
 from django.db import models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.conf import settings
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+import requests
+
+from selfstorage.settings import TLY_API_TOKEN
 
 # Create your models here.
 
@@ -108,3 +111,34 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
+
+
+class Advertising(models.Model):
+    url = models.URLField('Ссылка', blank=True)
+    text = models.TextField('Текст рекламы')
+    responses = models.IntegerField(
+        'Количество откликов',
+        null=True,
+        blank=True,
+        default=0,
+    )
+
+    class Meta:
+        verbose_name = 'Реклама'
+        verbose_name_plural = 'Реклама'
+
+
+@receiver(pre_save, sender=Advertising)
+def pre_save_advertising(sender, instance, **kwargs):
+    if not instance.pk:
+        url = "https://t.ly/api/v1/link/shorten"
+        headers = {
+            "Authorization": f"Bearer {TLY_API_TOKEN}"
+        }
+        payload = {
+            "long_url": "https://www.selfstorage.com/"
+        }
+        response = requests.post(url, headers=headers, data=payload)
+        response.raise_for_status()
+        instance.url = response.json()["short_url"]
+        instance.responses = 0
