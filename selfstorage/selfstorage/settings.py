@@ -56,6 +56,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'selfstorage.urls'
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'storage.authentication.EmailAuthBackend',
+]
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
