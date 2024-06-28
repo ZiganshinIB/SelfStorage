@@ -1,12 +1,16 @@
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.urls import reverse, reverse_lazy
-from django.shortcuts import redirect, resolve_url
+from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
+from django.contrib import messages
 from django.contrib.auth import authenticate, login
-from .forms import UserLoginForm
+
+from .forms import UserLoginForm, UserRegistrationForm
+from .models import Profile
 
 login_form = UserLoginForm()
+registration_form = UserRegistrationForm()
+
 
 # post
 @require_http_methods(['POST'])
@@ -17,25 +21,49 @@ def user_login(request):
         user = authenticate(request, username=cd['email'], password=cd['password'])
         if user is not None:
             if user.is_active:
-                print(user)
                 login(request, user)
                 return redirect('storage:account')
             else:
+                messages.error(request, 'Disabled account')
                 return HttpResponse('Disabled account')
         else:
+            messages.error(request, 'Invalid login')
             return HttpResponse('Invalid login')
     return render(request, 'index.html', {'login_form': form})
 
 
+@require_http_methods(['POST'])
+def user_register(request):
+    user_form = UserRegistrationForm(request.POST)
+    if user_form.is_valid():
+
+        # Create a new user object but avoid saving it yet
+        new_user = user_form.save(commit=False)
+        new_user.username = user_form.cleaned_data['email']
+        # Set the chosen password
+        new_user.set_password(
+            user_form.cleaned_data['password'])
+        # Save the User object
+        new_user.save()
+        user = authenticate(request, username=user_form.cleaned_data['email'], password=user_form.cleaned_data['password'])
+        login(request, user)
+        return redirect('storage:account')
+
 
 def view_index(request):
     '''Main page.'''
-    return render(request, 'index.html', {'login_form': login_form})
+    return render(request, 'index.html', {
+        'login_form': login_form,
+        'registration_form': registration_form
+    })
 
 
 def view_boxes(request):
     '''Boxes page.'''
-    return render(request, 'boxes.html', {'login_form': login_form})
+    return render(request, 'boxes.html', {
+        'login_form': login_form,
+        'registration_form': registration_form
+    })
 
 
 def view_account(request):
