@@ -94,6 +94,7 @@ class RentAdmin(admin.ModelAdmin):
         return obj.box.price
     box_price.short_description = 'Цена Ящика'
 
+
 @admin.register(Advertising)
 class AdvertisingModel(admin.ModelAdmin):
     list_display = ('url', 'text', 'responses',)
@@ -114,4 +115,3 @@ class AdvertisingModel(admin.ModelAdmin):
             ad.responses = response.json()["clicks"]
         Advertising.objects.bulk_update(advertising, ['responses'])
         return super().changelist_view(request, extra_context=extra_context)
-
