@@ -5,12 +5,11 @@ from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 
-from .forms import UserLoginForm, UserRegistrationForm
+from .forms import UserLoginForm, UserRegistrationForm, UserPasswordResetForm
 from .models import Profile
 
 login_form = UserLoginForm()
 registration_form = UserRegistrationForm()
-
 
 # post
 @require_http_methods(['POST'])
@@ -48,6 +47,25 @@ def user_register(request):
         user = authenticate(request, username=user_form.cleaned_data['email'], password=user_form.cleaned_data['password'])
         login(request, user)
         return redirect('storage:account')
+
+
+@require_http_methods(['POST'])
+def user_password_reset(request):
+    form = UserPasswordResetForm(request.POST)
+    if form.is_valid():
+        cd = form.cleaned_data
+        user = authenticate(request, username=cd['email'], password=cd['password'])
+        if user is not None:
+            if user.is_active:
+                login(request, user)
+                return redirect('storage:account')
+            else:
+                messages.error(request, 'Disabled account')
+                return HttpResponse('Disabled account')
+        else:
+            messages.error(request, 'Invalid login')
+            return HttpResponse('Invalid login')
+    return render(request, 'index.html', {'login_form': form})
 
 
 def view_index(request):
