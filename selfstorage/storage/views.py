@@ -1,17 +1,17 @@
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 
 from .forms import UserLoginForm, UserRegistrationForm, UserPasswordResetForm
-from .models import Profile
 
 login_form = UserLoginForm()
 registration_form = UserRegistrationForm()
 
-# post
+
 @require_http_methods(['POST'])
 def user_login(request):
     form = UserLoginForm(request.POST)
@@ -31,6 +31,12 @@ def user_login(request):
     return render(request, 'index.html', {'login_form': form})
 
 
+@login_required
+def user_logout(request):
+    logout(request)
+    return redirect('storage:index')
+
+
 @require_http_methods(['POST'])
 def user_register(request):
     user_form = UserRegistrationForm(request.POST)
@@ -44,7 +50,11 @@ def user_register(request):
             user_form.cleaned_data['password'])
         # Save the User object
         new_user.save()
-        user = authenticate(request, username=user_form.cleaned_data['email'], password=user_form.cleaned_data['password'])
+        user = authenticate(
+            request,
+            username=user_form.cleaned_data['email'],
+            password=user_form.cleaned_data['password']
+        )
         login(request, user)
         return redirect('storage:account')
 
@@ -69,7 +79,7 @@ def user_password_reset(request):
 
 
 def view_index(request):
-    '''Main page.'''
+    """ Main page."""
     return render(request, 'index.html', {
         'login_form': login_form,
         'registration_form': registration_form
@@ -77,7 +87,7 @@ def view_index(request):
 
 
 def view_boxes(request):
-    '''Boxes page.'''
+    """ Boxes page."""
     return render(request, 'boxes.html', {
         'login_form': login_form,
         'registration_form': registration_form
@@ -85,5 +95,5 @@ def view_boxes(request):
 
 
 def view_account(request):
-    '''Account page.'''
+    """ Account page."""
     return render(request, 'my-rent.html')
