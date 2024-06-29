@@ -127,12 +127,26 @@ class Message(models.Model):
     def __str__(self):
         return "{}: {}".format(self.email, self.subject)
 
-    def clean(self):
-        if self.pk:
-            original = type(self).objects.get(pk=self.pk)
-            if original.field1 != self.field1 or original.field2 != self.field2:
-                raise ValueError("Изменение данных запрещено")
-        super().clean()
+    def save(self, *args, **kwargs):
+        print("save")
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new:
+            send_mail(
+                self.subject,
+                self.text,
+                settings.EMAIL_HOST_USER,
+                [self.email],
+                fail_silently=False,
+            )
+
+
+    # def clean(self):
+    #     if self.pk:
+    #         original = type(self).objects.get(pk=self.pk)
+    #         if original.field1 != self.field1 or original.field2 != self.field2:
+    #             raise ValueError("Изменение данных запрещено")
+    #     super().clean()
 
     class Meta:
         verbose_name = 'Сообщение'
@@ -177,22 +191,3 @@ def save_rent_box(sender, instance, **kwargs):
     if instance.status == 3:
         instance.box.is_active = False
     instance.box.save()
-
-
-@receiver(pre_save, sender=Message)
-def save_message_box(sender, instance, **kwargs):
-    """
-    Сохранение сообщение
-    При сохранении сообщения - отправляет сообщение на почту
-    :param sender:
-    :param instance:
-    :param kwargs:
-    :return:
-    """
-    send_mail(
-        instance.subject,
-        instance.text,
-        settings.EMAIL_HOST_USER,
-        [instance.email],
-        fail_silently=False
-    )

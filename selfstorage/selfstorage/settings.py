@@ -147,3 +147,6 @@ EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD', 'password')
 EMAIL_PORT = env.int('EMAIL_PORT', 587)
 EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', True)
 TLY_API_TOKEN = env.str('TLY_API_TOKEN', 'default_password')
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/'
