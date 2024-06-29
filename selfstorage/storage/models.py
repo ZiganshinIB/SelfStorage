@@ -116,7 +116,8 @@ class Message(models.Model):
         on_delete=models.SET_NULL,
         verbose_name='Пользователь',
         related_name='messages',
-        null=True
+        null=True,
+        blank=True
     )
     email = models.EmailField('Получатель', max_length=255)
     subject = models.CharField('Тема', max_length=255)
@@ -125,6 +126,13 @@ class Message(models.Model):
 
     def __str__(self):
         return "{}: {}".format(self.email, self.subject)
+
+    def clean(self):
+        if self.pk:
+            original = type(self).objects.get(pk=self.pk)
+            if original.field1 != self.field1 or original.field2 != self.field2:
+                raise ValueError("Изменение данных запрещено")
+        super().clean()
 
     class Meta:
         verbose_name = 'Сообщение'
@@ -171,21 +179,20 @@ def save_rent_box(sender, instance, **kwargs):
     instance.box.save()
 
 
-# @receiver(post_save, sender=Message)
-# def save_message_box(sender, instance, **kwargs):
-#     """
-#     Сохранение сообщение
-#     При сохранении сообщения - отправляет сообщение на почту
-#     :param sender:
-#     :param instance:
-#     :param kwargs:
-#     :return:
-#     """
-#     send_mail(
-#         instance.subject,
-#         instance.text,
-#         settings.EMAIL_HOST_USER,
-#         [instance.email],
-#         fail_silently=False
-#     )
-#     instance.save()
+@receiver(pre_save, sender=Message)
+def save_message_box(sender, instance, **kwargs):
+    """
+    Сохранение сообщение
+    При сохранении сообщения - отправляет сообщение на почту
+    :param sender:
+    :param instance:
+    :param kwargs:
+    :return:
+    """
+    send_mail(
+        instance.subject,
+        instance.text,
+        settings.EMAIL_HOST_USER,
+        [instance.email],
+        fail_silently=False
+    )
