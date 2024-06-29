@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 @shared_task
 def send_daily_email_rental_expired():
     today = datetime.now().date()
-    overdue_rents = Rent.objects.filter(end__lt=today, status_not_in=(2,))  # Статус не "Завершена"
+    overdue_rents = Rent.objects.filter(end__lt=today, status__in=[1, 3])  # Статус не "Завершена"
     for rent in overdue_rents:
         profile = rent.profile
         email = profile.user.email
