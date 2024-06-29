@@ -11,6 +11,6 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'send_daily_email_rental_expired': {
         'task': 'storage.tasks.send_daily_email_rental_expired',
-        'schedule': crontab(minute="47"),
+        'schedule': crontab(hour="12"),
     },
 }
