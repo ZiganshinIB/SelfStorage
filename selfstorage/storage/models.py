@@ -4,6 +4,9 @@ from django.dispatch import receiver
 from django.conf import settings
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+# Отпарвка сообщения
+from django.core.mail import send_mail
+
 import requests
 
 from selfstorage.settings import TLY_API_TOKEN
@@ -105,6 +108,29 @@ class Advertising(models.Model):
         verbose_name_plural = 'Реклама'
 
 
+class Message(models.Model):
+    """ Сообщение """
+    created_at = models.DateTimeField('Время создания', auto_now_add=True)
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.SET_NULL,
+        verbose_name='Пользователь',
+        related_name='messages',
+        null=True
+    )
+    email = models.EmailField('Получатель', max_length=255)
+    subject = models.CharField('Тема', max_length=255)
+    text = models.TextField('Сообщение')
+    comments = models.TextField('Комментарии', null=True, blank=True)
+
+    def __str__(self):
+        return "{}: {}".format(self.email, self.subject)
+
+    class Meta:
+        verbose_name = 'Сообщение'
+        verbose_name_plural = 'Сообщения'
+
+
 @receiver(pre_save, sender=Advertising)
 def pre_save_advertising(sender, instance, **kwargs):
     if not instance.pk:
@@ -121,12 +147,14 @@ def pre_save_advertising(sender, instance, **kwargs):
         instance.responses = 0
 
 
+# Создает профиль пользователя при создании пользователя
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance,)
 
 
+# Сохраняет профиль пользователя
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def save_user_profile(sender, instance, **kwargs):
     instance.profile.save()
@@ -141,3 +169,23 @@ def save_rent_box(sender, instance, **kwargs):
     if instance.status == 3:
         instance.box.is_active = False
     instance.box.save()
+
+
+# @receiver(post_save, sender=Message)
+# def save_message_box(sender, instance, **kwargs):
+#     """
+#     Сохранение сообщение
+#     При сохранении сообщения - отправляет сообщение на почту
+#     :param sender:
+#     :param instance:
+#     :param kwargs:
+#     :return:
+#     """
+#     send_mail(
+#         instance.subject,
+#         instance.text,
+#         settings.EMAIL_HOST_USER,
+#         [instance.email],
+#         fail_silently=False
+#     )
+#     instance.save()
