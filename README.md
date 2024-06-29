@@ -24,6 +24,26 @@ python -m venv .venv
 ```shell
 pip install -r requirements.txt
 ```
+также требуется установить [Redis](https://redis.io/downloads/)
+В для ubuntu:
+```shell
+sudo apt update
+sudo apt install redis-server
+```
+Откройте конфигурационный файл:
+```shell
+sudo nano /etc/redis/redis.conf
+```
+Замените значение директивы supervised на systemd. Строка будет иметь следующий вид:
+```text
+# ...
+supervised systemd
+# ...
+```
+Перезапустите службу Redis:
+```shell
+sudo systemctl restart redis.service
+```
 ### 4. Объявление переменных среды (необходимо для запуска пректа)
 В файле settings.py есть настройка `SECRET_KEY` — это секретный ключ, применяемое для защиты от [CSRF атак](https://learn.javascript.ru/csrf).
 <br> По этой причине ключ хранится в переменной окружение. 
