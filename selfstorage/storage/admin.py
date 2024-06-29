@@ -4,7 +4,7 @@ from django.db.models import Count, Min, Q
 import requests
 from selfstorage import settings
 
-from .models import Advertising, Box, Rent, Storage, Profile
+from .models import Advertising, Box, Rent, Storage, Profile, Message
 
 
 @admin.register(Profile)
@@ -115,3 +115,18 @@ class AdvertisingModel(admin.ModelAdmin):
             ad.responses = response.json()["clicks"]
         Advertising.objects.bulk_update(advertising, ['responses'])
         return super().changelist_view(request, extra_context=extra_context)
+
+
+@admin.register(Message)
+class MessageModel(admin.ModelAdmin):
+    """ Сообщение """
+    # При создании сообщения можно указать все поля
+    # При редактировании сообщения можно указать только комментарии
+    # /changes/messages/
+    fields = ('profile', 'email', 'subject', 'text', 'comments', 'created_at', )
+    readonly_fields = ('created_at',)
+
+    list_display = ('email', 'subject', 'created_at',)
+
+    def has_change_permission(self, request, obj=None):
+        return False
