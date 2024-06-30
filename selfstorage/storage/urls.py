@@ -14,12 +14,12 @@ urlpatterns = [
     path('faq/', render, kwargs={'template_name': 'faq.html'}, name='faq'),
     path('boxes/', views.view_boxes, name='boxes'),
     path('account/', views.view_account, name='account'),
+    path('order/', views.create_order, name='create_order'),
     path('register/', views.user_register, name='register'),
     path('login/',
          auth_views.LoginView.as_view(
              form_class=forms.UserLoginForm,
              template_name='registration/login.html',
-             redirect_authenticated_user=reverse_lazy('storage:account'),
          ),
          name='login'),
     path('logout/',

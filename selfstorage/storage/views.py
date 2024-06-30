@@ -6,8 +6,8 @@ from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 
-from .forms import UserLoginForm, UserRegistrationForm, UserPasswordResetForm
-from .models import Profile
+from .forms import UserLoginForm, UserRegistrationForm, UserPasswordResetForm, OrderForm
+from .models import Profile, Order
 
 login_form = UserLoginForm()
 registration_form = UserRegistrationForm()
@@ -119,3 +119,20 @@ def view_account(request):
         'profile': profile
     }
     return render(request, 'my-rent.html', context)
+
+
+@login_required
+#@require_http_methods(['GET', 'POST'])
+def create_order(request):
+    get_data = request.GET
+    print(get_data)
+    if request.method == 'POST':
+        form = OrderForm(request.POST)
+        if form.is_valid():
+            order = form.save(commit=False)
+            order.user = request.user
+            order.save()
+            return redirect('storage:account')
+    else:
+        form = OrderForm()
+    return render(request, 'create-order.html', {'form': form})

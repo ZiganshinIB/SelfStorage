@@ -7,6 +7,7 @@
 
   {{ form.as_p }}
   {% csrf_token %}
+  <input type="hidden" name="next" value="{{ next }}">
 
   <a href="{% url 'storage:password_reset' %}" class="SelfStorage_orange">Забыли пароль?</a>
   <button type="submit" class="btn border-8 py-3 px-5 mt-5 mb-3 w-100 text-white fs_24 SelfStorage__bg_orange SelfStorage__btn2_orange">Войти</button>

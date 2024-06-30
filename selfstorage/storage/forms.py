@@ -1,10 +1,11 @@
 from django import forms
 from django.contrib.auth import get_user_model, authenticate
-
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
-from django.utils.translation import gettext_lazy
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy
+
+from .models import Order
 
 UserModel = get_user_model()
 
@@ -168,3 +169,62 @@ class UserPasswordResetForm(PasswordResetForm):
         )
     )
 
+
+class OrderForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ['has_delivery', 'start_rent', 'end_rent', 'from_city', 'from_street']
+        widgets = {
+            'from_city': forms.TextInput(
+                attrs={
+                    'type': 'hidden',
+                    'class': 'form-control  border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey',
+                    'placeholder': 'Город',
+                    'name': 'FROM_CITY'
+                }
+            ),
+            'from_street': forms.TextInput(
+                attrs={
+                    'type': 'hidden',
+                    'class': 'form-control  border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey',
+                    'placeholder': 'Улица',
+                    'name': 'FROM_STREET'
+                }
+            ),
+            'has_delivery': forms.CheckboxInput(
+                attrs={
+                    'class': 'form-check-input border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey',
+                    'name': 'HAS_DELIVERY'
+                }
+            ),
+            'start_rent': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control  border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey',
+                    'placeholder': 'Дата начала аренды',
+                    'name': 'START_RENT'
+                }
+            ),
+            'end_rent': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control  border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey',
+                    'placeholder': 'Дата окончания аренды',
+                    'name': 'END_RENT'
+                }
+            ),
+        }
+        labels = {
+            'from_city': '',
+            'from_street': '',
+            'has_delivery': 'Требуется доставка',
+            'start_rent': 'начало аренды',
+            'end_rent': 'конец аренды',
+        }
+        help_texts = {
+            'from_city': '',
+            'from_street': '',
+            'has_delivery': '',
+            'start_rent': '',
+            'end_rent': '',
+        }

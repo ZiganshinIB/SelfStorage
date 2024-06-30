@@ -1,0 +1,31 @@
+{% extends "registration/base.html" %}
+
+{% block title %}Создание заявки{% endblock title %}
+
+{% block form %}
+<form class="d-flex flex-column align-items-center" style="max-width: 480px" action="{% url 'storage:create_order' %}" method="post">
+  <h1 class="modal-title text-center fw-bold mb-3">Создание заявки</h1>
+  {{ form}}
+
+  {% csrf_token %}
+  <button type="submit" class="btn border-8 py-3 px-5 mt-5 mb-3 w-100 text-white fs_24 SelfStorage__bg_orange SelfStorage__btn2_orange">Создать заявку</button>
+  <a href="{% url 'storage:index' %}" class="SelfStorage_orange">Выйти на главную стрницу</a>
+</form>
+
+{% endblock form %}
+{% block scripts %}
+ <script type="text/javascript">
+   const hasDeliveryCheckbox = document.getElementById('id_has_delivery');
+   const deliveryFields = document.getElementById('delivery-fields');
+
+  hasDeliveryCheckbox.addEventListener('change', function() {
+    if (this.checked) {
+      id_from_city.type = 'text';
+      id_from_street.type = 'text';
+    } else {
+      id_from_city.type = 'hidden';
+      id_from_street.type = 'hidden';
+    }
+  });
+  </script>
+{% endblock scripts%}
