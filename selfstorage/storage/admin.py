@@ -4,7 +4,7 @@ from django.db.models import Count, Min, Q
 import requests
 from selfstorage import settings
 
-from .models import Advertising, Box, Rent, Storage, Profile, Message
+from .models import Advertising, Box, Rent, Storage, Profile, Message, Order
 
 
 @admin.register(Profile)
@@ -130,3 +130,25 @@ class MessageModel(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(Order)
+class OrderModel(admin.ModelAdmin):
+    """ Заказ """
+    # При создании заказа можно указать все поля
+    # При редактировании заказа можно указать только комментарии
+
+    fields = (
+        'profile',
+        'box',
+        'from_city',
+        'from_street',
+        'has_delivery',
+        'start_rent',
+        'end_rent',
+        'price',
+        'status',
+        'created_at',
+        'updated_at', )
+    readonly_fields = ('created_at', 'updated_at',)
+

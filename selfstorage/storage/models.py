@@ -4,6 +4,7 @@ from django.dispatch import receiver
 from django.conf import settings
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+from PIL import Image
 # Отпарвка сообщения
 from django.core.mail import send_mail
 
@@ -26,6 +27,17 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.last_name + ' ' + self.user.first_name
+
+    def save(
+        self, *args, **kwargs
+    ):
+        super().save(*args, **kwargs)
+
+        img = Image.open(self.photo)
+        if img.height > 180 or img.width > 180:
+            output_size = (200, 200)
+            img.thumbnail(output_size)
+            img.save(self.photo.path)
 
     class Meta:
         verbose_name = 'Профиль'
@@ -140,18 +152,54 @@ class Message(models.Model):
                 fail_silently=False,
             )
 
-
-    # def clean(self):
-    #     if self.pk:
-    #         original = type(self).objects.get(pk=self.pk)
-    #         if original.field1 != self.field1 or original.field2 != self.field2:
-    #             raise ValueError("Изменение данных запрещено")
-    #     super().clean()
-
     class Meta:
         verbose_name = 'Сообщение'
         verbose_name_plural = 'Сообщения'
 
+
+# Заказ
+class Order(models.Model):
+    OrderStatus = (
+        (1, 'Создан'),
+        (2, 'Обработан'),
+        (3, 'Подтвержден'),
+        (4, 'Отменен'),
+    )
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Пользователь')
+    box = models.ForeignKey(
+        Box,
+        on_delete=models.SET_NULL,
+        related_name='orders',
+        null=True,
+        blank=True,
+        verbose_name='Ящик'
+    )
+    from_city = models.CharField(max_length=255, verbose_name='Город', blank=True)
+    from_street = models.CharField(max_length=255, verbose_name='Улица', blank=True)
+    has_delivery = models.BooleanField(verbose_name='Доставка', default=False)
+    start_rent = models.DateTimeField('Начало аренды')
+    end_rent = models.DateTimeField('Конец аренды')
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена', default=0)
+    status = models.IntegerField(verbose_name='Статус', choices=OrderStatus, null=True, default=1)
+
+    created_at = models.DateTimeField('Время создания', auto_now_add=True)
+    updated_at = models.DateTimeField('Время обновления', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Заказ'
+        verbose_name_plural = 'Заказы'
+        ordering = ['-created_at', 'updated_at']
+
+    def __str__(self):
+        return f"{self.profile.user.last_name} {self.profile.user.first_name} {self.box.snumber}"
+
+    def save(self, *args, **kwargs):
+        # convert DateTimeField to datetime
+        end_date = self.end_rent
+        start_date = self.start_rent
+        months_difference = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month) + (0 if start_date.day > end_date.day else 1)
+        self.price = self.box.price * months_difference
+        super().save(*args, **kwargs)
 
 @receiver(pre_save, sender=Advertising)
 def pre_save_advertising(sender, instance, **kwargs):
