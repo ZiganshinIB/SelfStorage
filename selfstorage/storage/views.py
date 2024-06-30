@@ -13,7 +13,6 @@ login_form = UserLoginForm()
 registration_form = UserRegistrationForm()
 
 
-
 def user_login(request):
     form = UserLoginForm(request.POST)
     if request.method == 'POST':
@@ -55,26 +54,25 @@ def user_logout(request):
     return redirect('storage:index')
 
 
-@require_http_methods(['POST'])
 def user_register(request):
-    user_form = UserRegistrationForm(request.POST)
-    if user_form.is_valid():
-
-        # Create a new user object but avoid saving it yet
-        new_user = user_form.save(commit=False)
-        new_user.username = user_form.cleaned_data['email']
-        # Set the chosen password
-        new_user.set_password(
-            user_form.cleaned_data['password'])
-        # Save the User object
-        new_user.save()
-        user = authenticate(
-            request,
-            username=user_form.cleaned_data['email'],
-            password=user_form.cleaned_data['password']
-        )
-        login(request, user)
-        return redirect('storage:account')
+    if request.method == 'POST':
+        user_form = UserRegistrationForm(request.POST)
+        if user_form.is_valid():
+            # Новый пользователь из формы без загрузки в базу данных
+            new_user = user_form.save(commit=False)
+            # Установить пароль
+            new_user.set_password(
+                user_form.cleaned_data['password'])
+            # Save the User object
+            new_user.save()
+            return render(request,
+                          'registration/register_done.html',
+                          {'new_user': new_user})
+    else:
+        user_form = UserRegistrationForm()
+    return render(request,
+                  'registration/register.html',
+                  {'form': user_form})
 
 
 @require_http_methods(['POST'])
