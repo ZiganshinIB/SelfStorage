@@ -11,6 +11,7 @@
   <a href="{% url 'storage:password_reset' %}" class="SelfStorage_orange">Забыли пароль?</a>
   <button type="submit" class="btn border-8 py-3 px-5 mt-5 mb-3 w-100 text-white fs_24 SelfStorage__bg_orange SelfStorage__btn2_orange">Войти</button>
 
-  <span>Нет аккаунта?  <a href="#" class="SelfStorage_orange" data-bs-toggle="modal" data-bs-target="#RegModal" data-bs-dismiss="modal" aria-label="Close">Зарегистрируйтесь на сайте</a></span>
+  <span>Нет аккаунта?  <a href="{% url 'storage:register' %}" class="SelfStorage_orange" data-bs-toggle="modal" data-bs-target="#RegModal" data-bs-dismiss="modal" aria-label="Close">Зарегистрируйтесь на сайте</a></span>
+  <a href="{% url 'storage:index' %}" class="SelfStorage_orange">Выйти главную стрницу</a>
 </form>
 {% endblock form %}
