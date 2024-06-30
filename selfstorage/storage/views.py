@@ -12,8 +12,25 @@ login_form = UserLoginForm()
 registration_form = UserRegistrationForm()
 
 
-@require_http_methods(['POST'])
+
 def user_login(request):
+    form = UserLoginForm(request.POST)
+    if request.method == 'POST':
+        form = UserLoginForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            user = authenticate(request, username=cd['email'], password=cd['password'])
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
+                    return redirect('storage:account')
+                else:
+                    messages.error(request, 'Disabled account')
+                    return HttpResponse('Disabled account')
+            else:
+                messages.error(request, 'Invalid login')
+                return HttpResponse('Invalid login')
+        return render(request, 'index.html', {'login_form': form})
     form = UserLoginForm(request.POST)
     if form.is_valid():
         cd = form.cleaned_data
