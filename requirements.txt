@@ -12,4 +12,6 @@ tzdata==2024.1
 packaging==24.1
 environs==11.0.0
 python-dotenv==1.0.1
-requests-2.32.3
+requests==2.32.3
+celery==5.4.0
+redis==5.0.7

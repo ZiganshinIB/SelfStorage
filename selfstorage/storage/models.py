@@ -4,6 +4,10 @@ from django.dispatch import receiver
 from django.conf import settings
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+from PIL import Image
+# Отпарвка сообщения
+from django.core.mail import send_mail
+
 import requests
 
 from selfstorage.settings import TLY_API_TOKEN
@@ -24,36 +28,34 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.last_name + ' ' + self.user.first_name
 
+    def save(
+        self, *args, **kwargs
+    ):
+        super().save(*args, **kwargs)
+
+        img = Image.open(self.photo)
+        if img.height > 180 or img.width > 180:
+            output_size = (200, 200)
+            img.thumbnail(output_size)
+            img.save(self.photo.path)
+
     class Meta:
         verbose_name = 'Профиль'
         verbose_name_plural = 'Профили'
 
 
-class Address(models.Model):
-    city = models.CharField(max_length=255)
-    street = models.CharField(max_length=255)
-
-    class Meta:
-        verbose_name = 'Адрес'
-        verbose_name_plural = 'Адреса'
-
-    def __str__(self):
-        return f'{self.city}, {self.street}'
-
-
 class Storage(models.Model):
     photo = models.ImageField(upload_to='images', verbose_name='Фото')
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, verbose_name='Адрес')
+    city = models.CharField(max_length=255, verbose_name='Город', blank=True)
+    street = models.CharField(max_length=255, verbose_name='Улица', blank=True)
     temperature = models.FloatField(verbose_name='Температура')
 
     class Meta:
         verbose_name = 'Склад'
         verbose_name_plural = 'Склады'
 
-
-class BoxManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(is_active=True)
+    def __str__(self):
+        return '{} {}'.format(self.city, self.street)
 
 
 class Box(models.Model):
@@ -61,10 +63,8 @@ class Box(models.Model):
     storage = models.ForeignKey(Storage, on_delete=models.CASCADE, verbose_name='Склад', related_name='boxes')
     area = models.FloatField(verbose_name='Площадь')
     dimensions = models.CharField(max_length=255, verbose_name='Размеры')
-    price = models.FloatField(verbose_name='Цена')
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена', default=0)
     is_active = models.BooleanField(verbose_name='Активен', default=True)
-
-    objects = BoxManager()
 
     class Meta:
         unique_together = [('snumber',)]
@@ -88,8 +88,11 @@ class Rent(models.Model):
         (2, 'Завершена'),
         (3, 'Просрочена'),
     )
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь')
-    box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='Ящик')
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Пользователь')
+    box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='Ящик', related_name='rents')
+    from_city = models.CharField(max_length=255, verbose_name='Город', blank=True)
+    from_street = models.CharField(max_length=255, verbose_name='Улица', blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена', default=0)
     start = models.DateTimeField(verbose_name='Начало аренды', auto_now_add=True)
     end = models.DateTimeField(verbose_name='Конец аренды')
     status = models.IntegerField(verbose_name='Статус', choices=RentStatus, null=True)
@@ -99,18 +102,7 @@ class Rent(models.Model):
         verbose_name_plural = 'Аренды'
 
     def __str__(self):
-        return self.user
-
-
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance,)
-
-
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+        return self.profile.user.last_name + ' ' + self.profile.user.first_name + ' ' + self.box.snumber
 
 
 class Advertising(models.Model):
@@ -128,6 +120,87 @@ class Advertising(models.Model):
         verbose_name_plural = 'Реклама'
 
 
+class Message(models.Model):
+    """ Сообщение """
+    created_at = models.DateTimeField('Время создания', auto_now_add=True)
+    profile = models.ForeignKey(
+        Profile,
+        on_delete=models.SET_NULL,
+        verbose_name='Пользователь',
+        related_name='messages',
+        null=True,
+        blank=True
+    )
+    email = models.EmailField('Получатель', max_length=255)
+    subject = models.CharField('Тема', max_length=255)
+    text = models.TextField('Сообщение')
+    comments = models.TextField('Комментарии', null=True, blank=True)
+
+    def __str__(self):
+        return "{}: {}".format(self.email, self.subject)
+
+    def save(self, *args, **kwargs):
+        print("save")
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new:
+            send_mail(
+                self.subject,
+                self.text,
+                settings.EMAIL_HOST_USER,
+                [self.email],
+                fail_silently=False,
+            )
+
+    class Meta:
+        verbose_name = 'Сообщение'
+        verbose_name_plural = 'Сообщения'
+
+
+# Заказ
+class Order(models.Model):
+    OrderStatus = (
+        (1, 'Создан'),
+        (2, 'Обработан'),
+        (3, 'Подтвержден'),
+        (4, 'Отменен'),
+    )
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Пользователь')
+    box = models.ForeignKey(
+        Box,
+        on_delete=models.SET_NULL,
+        related_name='orders',
+        null=True,
+        blank=True,
+        verbose_name='Ящик'
+    )
+    from_city = models.CharField(max_length=255, verbose_name='Город', blank=True)
+    from_street = models.CharField(max_length=255, verbose_name='Улица', blank=True)
+    has_delivery = models.BooleanField(verbose_name='Доставка', default=False)
+    start_rent = models.DateTimeField('Начало аренды')
+    end_rent = models.DateTimeField('Конец аренды')
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена', default=0)
+    status = models.IntegerField(verbose_name='Статус', choices=OrderStatus, null=True, default=1)
+
+    created_at = models.DateTimeField('Время создания', auto_now_add=True)
+    updated_at = models.DateTimeField('Время обновления', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Заказ'
+        verbose_name_plural = 'Заказы'
+        ordering = ['-created_at', 'updated_at']
+
+    def __str__(self):
+        return f"{self.profile.user.last_name} {self.profile.user.first_name} {self.box.snumber}"
+
+    def save(self, *args, **kwargs):
+        # convert DateTimeField to datetime
+        end_date = self.end_rent
+        start_date = self.start_rent
+        months_difference = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month) + (0 if start_date.day > end_date.day else 1)
+        self.price = self.box.price * months_difference
+        super().save(*args, **kwargs)
+
 @receiver(pre_save, sender=Advertising)
 def pre_save_advertising(sender, instance, **kwargs):
     if not instance.pk:
@@ -142,3 +215,27 @@ def pre_save_advertising(sender, instance, **kwargs):
         response.raise_for_status()
         instance.url = response.json()["short_url"]
         instance.responses = 0
+
+
+# Создает профиль пользователя при создании пользователя
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance,)
+
+
+# Сохраняет профиль пользователя
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
+
+
+@receiver(post_save, sender=Rent)
+def save_rent_box(sender, instance, **kwargs):
+    if instance.status == 1:
+        instance.box.is_active = False
+    if instance.status == 2:
+        instance.box.is_active = True
+    if instance.status == 3:
+        instance.box.is_active = False
+    instance.box.save()
