@@ -116,10 +116,10 @@ def view_boxes(request):
     """ Boxes page."""
     storages = Storage.objects.all()
     storages = storages.annotate(
-            free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
-            count_boxes=Count('boxes'),
-            min_price=Min('boxes__price', )
-        )
+        free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
+        count_boxes=Count('boxes'),
+        min_price=Min('boxes__price', )
+    )
     try:
         storage_id = request.GET['storage_id']
         storage = storages.get(id=storage_id)
