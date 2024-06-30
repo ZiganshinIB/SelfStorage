@@ -1,18 +1,18 @@
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
+from django.db.models import Count, Min, Q
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
-from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
-from django.utils.encoding import force_str
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_encode
+import random
 
 from .tokens import order_confirmation_token
 
 from .forms import UserLoginForm, UserRegistrationForm, UserPasswordResetForm, OrderForm
-from .models import Profile, Order, Box
+from .models import Profile, Order, Box, Rent, Storage
 
 login_form = UserLoginForm()
 registration_form = UserRegistrationForm()
@@ -100,18 +100,39 @@ def user_password_reset(request):
 
 def view_index(request):
     """ Main page."""
-    return render(request, 'index.html', {
-        'login_form': login_form,
-        'registration_form': registration_form
-    })
+    qs = Storage.objects.all()
+    qs = qs.annotate(
+            free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
+            count_boxes=Count('boxes'),
+            min_price=Min('boxes__price', )
+        ).order_by('?').first()
+    context = {
+        'storage': qs
+    }
+    return render(request, 'index.html', context)
 
 
 def view_boxes(request):
     """ Boxes page."""
-    return render(request, 'boxes.html', {
-        'login_form': login_form,
-        'registration_form': registration_form
-    })
+    storages = Storage.objects.all()
+    storages = storages.annotate(
+            free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
+            count_boxes=Count('boxes'),
+            min_price=Min('boxes__price', )
+        )
+    try:
+        storage_id = request.GET['storage_id']
+        storage = storages.get(id=storage_id)
+    except:
+        storage = storages.order_by('?').first()
+    boxes = Box.objects.filter(storage=storage)
+
+    context = {
+        'storages': storages,
+        'storage': storage,
+        'boxes': boxes,
+    }
+    return render(request, 'boxes.html', context)
 
 
 @login_required
