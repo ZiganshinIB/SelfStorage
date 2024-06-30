@@ -3,7 +3,7 @@
 		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>
 		</button>
-		<a class="navbar-brand" href="#">
+		<a class="navbar-brand" href="{% url 'storage:index' %}">
 			<img src="{% static 'Vector.svg' %}" alt="[]">
 			<img src="{% static 'SelfStorage.svg' %}" alt="SelfStorage">
 		</a>
@@ -24,7 +24,7 @@
 					<a class="nav-link SelfStorage_black" href="{% url 'storage:faq' %}">Правила хранения</a>
 				</li>
 				<li class="nav-item me-5">
-					<a class="nav-link SelfStorage_black" href="#">Арендовать бокс</a>
+					<a class="nav-link SelfStorage_black" href="#rent-box" role="button">Арендовать бокс</a>
 				</li>
 				{% if request.user.is_authenticated %}
 				<li class="nav-item d-flex align-items-center me-5">
