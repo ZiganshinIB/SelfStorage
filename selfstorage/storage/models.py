@@ -4,6 +4,7 @@ from django.dispatch import receiver
 from django.conf import settings
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+from PIL import Image
 # Отпарвка сообщения
 from django.core.mail import send_mail
 
@@ -26,6 +27,17 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.last_name + ' ' + self.user.first_name
+
+    def save(
+        self, *args, **kwargs
+    ):
+        super().save(*args, **kwargs)
+
+        img = Image.open(self.photo)
+        if img.height > 180 or img.width > 180:
+            output_size = (200, 200)
+            img.thumbnail(output_size)
+            img.save(self.photo.path)
 
     class Meta:
         verbose_name = 'Профиль'

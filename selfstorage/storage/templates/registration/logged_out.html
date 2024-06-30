@@ -1,0 +1,12 @@
+{% extends "registration/base.html" %}
+{% load static %}
+{% block title %}Logout{% endblock title %}
+{% block form %}
+<form class="d-flex flex-column align-items-center" style="max-width: 480px">
+  <h1 class="modal-title fw-bold mb-3">Вы вышли из аккаунта</h1>
+ <a href="{% url 'storage:index' %}" class="SelfStorage_orange">На главную стрницу</a>
+</form>
+
+
+
+{% endblock form %}

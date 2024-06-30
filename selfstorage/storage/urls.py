@@ -22,7 +22,12 @@ urlpatterns = [
              redirect_authenticated_user=reverse_lazy('storage:account'),
          ),
          name='login'),
-    path('logout/', views.user_logout, name='logout'),
+    path('logout/',
+         auth_views.LogoutView.as_view(
+             template_name='registration/logged_out.html'
+             # next_page=reverse_lazy('storage:index')
+         ),
+         name='logout'),
     # path('edit/', views.profile_edit, name='edit'),
 
     # Сброс пароля
