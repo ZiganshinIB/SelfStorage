@@ -1,0 +1,15 @@
+Для подтверждения заказа перейдите по ссылке:
+Ваш заказ: {{ order.pk }}
+{% if order.has_delivery %}
+Доставка: Да
+Заберем от:
+Город: {{ order.from_city }}
+Улица: {{ order.from_street }}
+{% else %}
+Доставка: Нет
+{% endif %}
+Начало аренды: {{ order.start_rent }}
+Конец аренды: {{ order.end_rent }}
+Цена: {{ order.price }}
+Ссылка: {{ confirmation_url }}
+Оплата: после замеров

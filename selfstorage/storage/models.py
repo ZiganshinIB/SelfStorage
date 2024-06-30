@@ -1,7 +1,12 @@
+import uuid
+
 from django.db import models
 from django.db.models.signals import post_save, pre_save
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from django.dispatch import receiver
 from django.conf import settings
+from django.utils.http import urlsafe_base64_encode
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
 from PIL import Image
@@ -11,6 +16,7 @@ from django.core.mail import send_mail
 import requests
 
 from selfstorage.settings import TLY_API_TOKEN
+from .tokens import order_confirmation_token
 
 # Create your models here.
 
@@ -136,6 +142,7 @@ class Message(models.Model):
     text = models.TextField('Сообщение')
     comments = models.TextField('Комментарии', null=True, blank=True)
 
+
     def __str__(self):
         return "{}: {}".format(self.email, self.subject)
 
@@ -179,8 +186,10 @@ class Order(models.Model):
     has_delivery = models.BooleanField(verbose_name='Доставка', default=False)
     start_rent = models.DateTimeField('Начало аренды')
     end_rent = models.DateTimeField('Конец аренды')
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена', default=0)
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена', default=0, null=True, blank=True)
     status = models.IntegerField(verbose_name='Статус', choices=OrderStatus, null=True, default=1)
+    url_confirmation = models.URLField('Ссылка подтверждения', null=True, blank=True)
+    uidb64 = models.CharField(primary_key=False, editable=False, null=True, blank=True, max_length=255)
 
     created_at = models.DateTimeField('Время создания', auto_now_add=True)
     updated_at = models.DateTimeField('Время обновления', auto_now=True)
@@ -194,12 +203,33 @@ class Order(models.Model):
         return f"{self.profile.user.last_name} {self.profile.user.first_name} {self.box.snumber}"
 
     def save(self, *args, **kwargs):
-        # convert DateTimeField to datetime
-        end_date = self.end_rent
-        start_date = self.start_rent
-        months_difference = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month) + (0 if start_date.day > end_date.day else 1)
-        self.price = self.box.price * months_difference
+        if self.status == 1:
+            end_date = self.end_rent
+            start_date = self.start_rent
+            months_difference = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month) + (0 if start_date.day > end_date.day else 1)
+            self.price = self.box.price * months_difference
+        if self.status == 2:
+            self.send_confirmation_email()
+        if self.status == 3:
+            self.box.is_active = True
+        if self.status == 4:
+            self.box.is_active = False
+        self.box.save()
         super().save(*args, **kwargs)
+
+    def send_confirmation_email(self,):
+        """ Отправка письма с подтверждением заказа. """
+        subject = 'Подтверждение заказа'
+        context = {
+            'confirmation_url': self.url_confirmation,
+            'order': self
+        }
+        html_message = render_to_string('order_confirmation_email.html', context)
+        plain_message = strip_tags(html_message)
+        from_email = settings.EMAIL_HOST_USER
+        recipient_list = [self.profile.user.email]
+        send_mail(subject, plain_message, from_email, recipient_list)
+
 
 @receiver(pre_save, sender=Advertising)
 def pre_save_advertising(sender, instance, **kwargs):

@@ -1,0 +1,12 @@
+{% extends "registration/base.html" %}
+{% load static %}
+{% block title %}Заявка создана{% endblock title %}
+{% block form %}
+<form class="d-flex flex-column align-items-center" style="max-width: 480px">
+  <h1 class="modal-title text-center fw-bold mb-3">Заявка создана</h1>
+  <a href="{% url 'storage:index' %}" class=" SelfStorage_orange">
+  <button  class="btn border-8 py-3 px-5 mt-5 mb-3 w-100 text-white fs_24 SelfStorage__bg_orange SelfStorage__btn2_orange" >
+    Вернуться на главную
+  </button></a>
+</form>
+{% endblock form %}

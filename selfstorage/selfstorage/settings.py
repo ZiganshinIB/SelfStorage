@@ -41,7 +41,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'phonenumber_field'
+    'phonenumber_field',
+    # toolbar
+
+
 ]
 
 ADMINS = [('SelfStorage', env.str('EMAIL_HOST_USER'))]
