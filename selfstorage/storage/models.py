@@ -60,6 +60,17 @@ class Storage(models.Model):
         verbose_name = 'Склад'
         verbose_name_plural = 'Склады'
 
+    def save(
+            self, *args, **kwargs
+    ):
+        super().save(*args, **kwargs)
+
+        img = Image.open(self.photo)
+        if img.height > 180 or img.width > 180:
+            output_size = (200, 200)
+            img.thumbnail(output_size)
+            img.save(self.photo.path)
+
     def __str__(self):
         return '{} {}'.format(self.city, self.street)
 

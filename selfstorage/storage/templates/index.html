@@ -9,7 +9,6 @@
 {% endblock header %}
 
 {% block content %}
-
 	<article class="text-center row pt-header">
 		<h1 class=" fw-bold SelfStorage_green mb-5">Чем мы можем помочь?</h1>
 		<div class="col-12 col-sm-4 mb-4 mb-sm-0">
@@ -50,7 +49,9 @@
 				</div>
 
 				<h4 class="text-white mt-5 mb-3">Бокс от 190 р. за м²</h4>
-				<button class="btn fs_24 SelfStorage_green bg-white SelfStorage__btn_green border-8 w-50 py-3">Подробнее</button>
+				<a href="#offer_storage" class="btn fs_24 SelfStorage_green bg-white SelfStorage__btn_green border-8 w-50 py-3" >
+					Подробнее
+				</a>
 			</div>
 		</div>
 		<div class="col-12 col-lg-6 d-flex justify-content-center justify-content-lg-start">
@@ -64,12 +65,14 @@
 					<span class="text-white">Другие идеи хранения</span>
 				</div>
 				<h4 class="text-white mt-5 mb-3">Бокс от 210 р. за м²</h4>
-				<button class="btn fs_24 SelfStorage_orange bg-white SelfStorage__btn_orange border-8 w-50 py-3">Подробнее</button>
+				<a href="#offer_storage" class="btn fs_24 SelfStorage_orange bg-white SelfStorage__btn_orange border-8 w-50 py-3" >
+					Подробнее
+				</a>
 			</div>
 		</div>
 	</article>
 
-	<article class="row pt-header">
+	<article class="row pt-header" >
 		<h1 class="text-center fw-bold SelfStorage_green mb-4">Узнайте, как работает SelfStorage всего за минуту</h1>
 		<div class="d-flex justify-content-center">
 			<iframe class="w-100" height="700" src="https://www.youtube.com/embed/NsSC4pQ6HJE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -110,33 +113,32 @@
 		</div>
 	</article>
 
-	<article class="row pt-header">
+	<article class="row pt-header" id="offer_storage">
 		<div class="col-12 col-lg-6 mb-3 mb-lg-0 SelfStorage__img2"></div>
 		<div class="col-12 col-lg-6 d-flex flex-column align-items-center align-items-lg-start">
 			<h1 class="text-start fw-bold SelfStorage_green mb-4">Всегда рядом</h1>
-			<h4 class="SelfStorage_grey">Одинцово,  ул. Северная, д. 36</h4>
+			<h4 class="SelfStorage_grey">{{ storage.city }},  {{ storage.street }}</h4>
 			<div class="row">
 				<div class="col-6 d-flex flex-column align-items-center align-items-lg-start">
-					<span class="fs_30 fw-bold SelfStorage_orange">18 °С</span>
+					<span class="fs_30 fw-bold SelfStorage_orange">{{ storage.temperature }} °С</span>
 					<span class="SelfStorage_grey mb-3">Температура на складе</span>
-					<span class="fs_30 fw-bold SelfStorage_orange">24 из 258</span>
+					<span class="fs_30 fw-bold SelfStorage_orange">{{ storage.free_boxes }} из {{ storage.count_boxes }}</span>
 					<span class="SelfStorage_grey mb-3">Боксов свободно</span>
 				</div>
 				<div class="col-6 d-flex flex-column align-items-center align-items-lg-start">
 					<span class="fs_30 fw-bold SelfStorage_orange">до 3.5 м</span>
 					<span class="SelfStorage_grey mb-3">Высота потолка</span>
-					<span class="fs_30 fw-bold SelfStorage_orange">2264 ₽</span>
+					<span class="fs_30 fw-bold SelfStorage_orange">{{ storage.min_price }} ₽</span>
 					<span class="SelfStorage_grey mb-3">Оплата за месяц</span>
 				</div>
-				<a href="#" class="text-center text-lg-start mt-4 mb-5 SelfStorage_green">Подробнее о складе</a>
 				<div class="d-flex flex-column align-items-center align-items-lg-start">
-					<button class="btn w-75 fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Арендовать бокс</button>
-					<button onclick="document.location='boxes/'" class="btn w-75 fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_orange SelfStorage__btn2_orange">Выбрать склад</button>
+					<a href="{% url 'storage:boxes' %}?storage={{ storage.id }}" class="btn w-75 fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Арендовать бокс</a>
+					<button onclick="document.location='{% url 'storage:boxes' %}'" class="btn w-75 fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_orange SelfStorage__btn2_orange">Выбрать склад</button>
 				</div>
 			</div>
 		</div>
 	</article>
-	<article class="row pt-header">
+	<article class="row pt-header" id="benefits">
 		<h1 class="text-center fw-bold SelfStorage_green mb-4">Забота о ваших ценностях – наша главная задача</h1>
 		<div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel">
 			<div class="carousel-inner border">
@@ -148,7 +150,7 @@
 								<p class="fs_24">Быстро собрали вещи и бесплатно доставили до ближайшего склада.</p>
 								<p class="fs_24">Удобная система напоминания о том, что срок хранения подходит к концу.</p>
 								<p class="fs_24">Вещи были в целостности, ничего не повредилось.</p>
-								<a href="#" class="SelfStorage_green">Читать отзыв полностью</a>
+
 							</div>
 						</div>
 						<div class="col-12 col-lg-6 d-flex flex-column align-items-center justify-content-center">
@@ -166,7 +168,6 @@
 								<p class="fs_24">Очень тяжело было прощаться с вещами, которые были у меня с самого детства.
 									На новую квартиру все никак не могло уместиться, начал ломать голову, что же делать.
 									Решил попробовать арендовать бокс на полгода, такой опыт был впервые.</p>
-								<a href="#" class="SelfStorage_green">Читать отзыв полностью</a>
 							</div>
 						</div>
 						<div class="col-12 col-lg-6 d-flex flex-column align-items-center justify-content-center">
