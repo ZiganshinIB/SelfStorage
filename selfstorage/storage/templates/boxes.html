@@ -1,5 +1,5 @@
 {% for box in boxes %}
-<a href="{% url 'storage:create_order' %}?box_id={{ box.pk }}" class="row text-decoration-none py-3 px-4 mt-5 SelfStorage__boxlink">
+<a href="{% url 'storage:create_order' %}?box={{ box.pk }}" class="row text-decoration-none py-3 px-4 mt-5 SelfStorage__boxlink">
     <div class="col-12 col-md-4 col-lg-3 d-flex justify-content-center align-items-center">
         <span class="fs_24">№{{ box.snumber }}</span>
     </div>
@@ -11,7 +11,7 @@
     </div>
     <div class="col-12 col-lg-3">
         <span class="btn my-2 w-100 text-white fs_24 SelfStorage__bg_orange SelfStorage__btn2_orange border-8">
-            От {{ box.price }} ₽s
+            От {{ box.price }} ₽
         </span>
     </div>
 </a>

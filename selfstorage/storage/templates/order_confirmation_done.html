@@ -7,6 +7,10 @@
   <p class="text-center">Ваша заявка принята находится в обработке.</p>
   <p class="text-center"> После расмотрении заявки вы получите письмо.</p>
   <p class="text-center"> Перейдите по ссылке в письме для подтверждения</p>
-  <a href="{% url 'storage:index' %}" class="btn border-8 py-3 px-5 mt-5 mb-3 w-100 text-white fs_24 SelfStorage__bg_orange SelfStorage_orange">Вернуться на главную</a>
+  <a href="{% url 'storage:index' %}" class=" SelfStorage_orange">
+  <button  class="btn border-8 py-3 px-5 mt-5 mb-3 w-100 text-white fs_24 SelfStorage__bg_orange SelfStorage__btn2_orange" >
+    Вернуться на главную
+  </button>
+  </a>
 </form>
 {% endblock form %}

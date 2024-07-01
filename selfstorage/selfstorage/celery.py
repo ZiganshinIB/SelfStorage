@@ -17,4 +17,8 @@ app.conf.beat_schedule = {
         'task': 'storage.tasks.send_daily_email_rental_expires_soon',
         'schedule': crontab(minute="5"),
     },
+    'cancellation_of_order_by_time': {
+        'task': 'storage.tasks.cancellation_of_order_by_time',
+        'schedule': crontab(minute="10"),
+    },
 }

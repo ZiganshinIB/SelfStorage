@@ -120,9 +120,6 @@ class AdvertisingModel(admin.ModelAdmin):
 @admin.register(Message)
 class MessageModel(admin.ModelAdmin):
     """ Сообщение """
-    # При создании сообщения можно указать все поля
-    # При редактировании сообщения можно указать только комментарии
-    # /changes/messages/
     fields = ('profile', 'email', 'subject', 'text', 'comments', 'created_at', )
     readonly_fields = ('created_at',)
 
@@ -135,8 +132,6 @@ class MessageModel(admin.ModelAdmin):
 @admin.register(Order)
 class OrderModel(admin.ModelAdmin):
     """ Заказ """
-    # При создании заказа можно указать все поля
-    # При редактировании заказа можно указать только комментарии
 
     fields = (
         'profile',
@@ -150,5 +145,10 @@ class OrderModel(admin.ModelAdmin):
         'status',
         'created_at',
         'updated_at', )
-    readonly_fields = ('created_at', 'updated_at',)
+    readonly_fields = ('status','created_at', 'updated_at',)
+
+    # Запрещаем добовлять новые записи
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
