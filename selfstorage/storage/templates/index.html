@@ -134,7 +134,7 @@
 				</div>
 				<a href="#" class="text-center text-lg-start mt-4 mb-5 SelfStorage_green">Подробнее о складе</a>
 				<div class="d-flex flex-column align-items-center align-items-lg-start">
-					<a href="{% url 'storage:boxes' %}?storage={{ storage.id }}" class="btn w-75 fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Арендовать бокс</a>
+					<a href="{% url 'storage:boxes' %}?storage={{ storage.id }}#BOX" class="btn w-75 fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Арендовать бокс</a>
 					<button onclick="document.location='{% url 'storage:boxes' %}'" class="btn w-75 fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_orange SelfStorage__btn2_orange">Выбрать склад</button>
 				</div>
 			</div>
