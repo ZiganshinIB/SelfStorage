@@ -18,7 +18,13 @@ from selfstorage.settings import TLY_API_TOKEN
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь',
                                 related_name='profile')
-    photo = models.ImageField(upload_to='images/profile', verbose_name='Фото', default='images/profile/default.jpg')
+    photo = models.ImageField(
+        upload_to='images/profile',
+        verbose_name='Фото',
+        default='images/profile/default.jpg',
+        # blank=True,
+        # null=True,
+    )
     phone = PhoneNumberField(
         verbose_name='телефон',
         region='RU',

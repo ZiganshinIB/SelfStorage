@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 
 from .forms import UserLoginForm, UserRegistrationForm, UserPasswordResetForm
-from .models import Profile
+from .models import Profile, Rent
 
 login_form = UserLoginForm()
 registration_form = UserRegistrationForm()
@@ -114,8 +114,11 @@ def view_boxes(request):
 def view_account(request):
     """ Account page."""
 
-    profile = Profile.objects.get(user=request.user)
+    profile = Profile.objects.get(user=request.user)  # get(id=5)
+    rents = Rent.objects.filter(profile=profile)
+
     context = {
-        'profile': profile
+        'profile': profile,
+        'rents': list(enumerate(rents, 1)),
     }
     return render(request, 'my-rent.html', context)
