@@ -5,8 +5,10 @@
 {% block form %}
 <form class="d-flex flex-column align-items-center" style="max-width: 480px" action="{% url 'storage:create_order' %}" method="post">
   <h1 class="modal-title text-center fw-bold mb-3">Создание заявки</h1>
-  {{ form}}
-  <input type="hidden" name="box_id" value="{{ box_id }}">
+  {{ form }}
+
+  <input type="hidden" name="box" value="{{ box }}">
+
   {% csrf_token %}
   <button type="submit" class="btn border-8 py-3 px-5 mt-5 mb-3 w-100 text-white fs_24 SelfStorage__bg_orange SelfStorage__btn2_orange">Создать заявку</button>
   <a href="{% url 'storage:index' %}" class="SelfStorage_orange">Выйти на главную стрницу</a>

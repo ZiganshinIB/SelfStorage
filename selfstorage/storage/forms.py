@@ -1,9 +1,12 @@
+from datetime import datetime
+
 from django import forms
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy
+from django.utils import timezone
 
 from .models import Order
 
@@ -228,3 +231,21 @@ class OrderForm(forms.ModelForm):
             'start_rent': '',
             'end_rent': '',
         }
+
+    def clean_start_rent(self):
+        cd = self.cleaned_data
+        if cd['start_rent'] < timezone.now():
+            raise forms.ValidationError('Начало аренды не может быть меньше сегодняшней даты.')
+        return cd['start_rent']
+
+    def clean_end_rent(self):
+        cd = self.cleaned_data
+        if cd['end_rent'] < timezone.now():
+            raise forms.ValidationError('Конец аренды не может быть меньше сегодняшней даты.')
+        return cd['end_rent']
+
+    def clean(self):
+        cd = self.cleaned_data
+        if cd['start_rent'] > cd['end_rent']:
+            raise forms.ValidationError('Конец аренды не может быть меньше начала аренды.')
+        super().clean()

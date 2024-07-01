@@ -1,5 +1,5 @@
 from celery import shared_task
-from .models import Rent, Message
+from .models import Rent, Message, Order
 from datetime import datetime, timedelta
 
 # TODO: Оптимизировать запросы
@@ -99,3 +99,12 @@ def send_daily_email_rental_expires_soon():
             message = Message(profile=profile, email=email, subject=subject, text=text, comments=comments)
             message.save()
 
+
+@shared_task
+def cancellation_of_order_by_time():
+    # Отмена заказа по истечению срока (1 час)
+    today = datetime.now().date() - timedelta(hours=1)
+    orders = Order.objects.filter(updated_at__lt=today)
+    for order in orders:
+        order.status = 4
+        order.save()

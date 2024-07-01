@@ -174,16 +174,17 @@ def get_boxes(request):
 @login_required
 #@require_http_methods(['GET', 'POST'])
 def create_order(request):
-
     if request.method == 'POST':
         form = OrderForm(request.POST)
+        box_id = request.POST['box']
         context = {
-            'form': form
+            'form': form,
+            'box': box_id
         }
         if form.is_valid():
             order = form.save(commit=False)
             order.profile = Profile.objects.get(user=request.user)
-            order.box = Box.objects.get(id=request.POST['box_id'])
+            order.box = Box.objects.get(id=box_id)
             uidb64 = urlsafe_base64_encode(str(order.pk).encode())
             url_confirmation = request.build_absolute_uri(
             f"/order_confirm/{uidb64}/{order_confirmation_token.make_token(order)}/"
@@ -197,7 +198,7 @@ def create_order(request):
         form = OrderForm()
         context = {
             'form': form,
-            'box_id': get_data['box_id'][0]
+            'box': get_data['box'][0]
         }
     return render(request, 'create-order.html', context)
 
@@ -208,7 +209,7 @@ def order_confirmation_done(request):
 
 def order_confirm(request, uidb64, token):
     """ Подтверждение заказа. Пользователь перешел по ссылки в письме. """
-    order = Order.objects.get(uidb64=uidb64)
+    order = Order.objects.filter(uidb64=uidb64).first()
     if order is not None and order.status == 2:
         order.status = 3
         order.save()

@@ -8,6 +8,10 @@
 {% else %}
 Доставка: Нет
 {% endif %}
+Будем хранить на:
+Город: {{ order.box.storage.city }}
+Улица: {{ order.box.storage.city.street }}
+Ящик: {{ order.box.snumber }}
 Начало аренды: {{ order.start_rent }}
 Конец аренды: {{ order.end_rent }}
 Цена: {{ order.price }}
