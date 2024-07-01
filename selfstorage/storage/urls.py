@@ -12,14 +12,18 @@ app_name = "storage"
 urlpatterns = [
     path('', views.view_index, name='index'),
     path('faq/', render, kwargs={'template_name': 'faq.html'}, name='faq'),
-    path('boxes/', views.view_boxes, name='boxes'),
+    path('boxes/', views.view_storages, name='boxes'),
+    path('boxes/api/get/', views.get_boxes, name='get_boxes'),
     path('account/', views.view_account, name='account'),
+    path('order/', views.create_order, name='create_order'),
+    path('order_confirmation/done/', views.order_confirmation_done, name='order_confirmation_done'),
+    path('order_confirm/<uidb64>/<token>/', views.order_confirm, name='order_confirm'),
     path('register/', views.user_register, name='register'),
+
     path('login/',
          auth_views.LoginView.as_view(
              form_class=forms.UserLoginForm,
              template_name='registration/login.html',
-             redirect_authenticated_user=reverse_lazy('storage:account'),
          ),
          name='login'),
     path('logout/',

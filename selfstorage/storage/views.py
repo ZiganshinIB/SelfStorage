@@ -1,20 +1,27 @@
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Min, Q
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.utils.http import urlsafe_base64_encode
+# JSONResponse
+from django.http import JsonResponse
 
-from .forms import UserLoginForm, UserRegistrationForm, UserPasswordResetForm
-from .models import Profile, Rent
+from .tokens import order_confirmation_token
+
+from .forms import UserLoginForm, UserRegistrationForm, UserPasswordResetForm, OrderForm
+from .models import Profile, Rent, Order, Box, Rent, Storage
 
 login_form = UserLoginForm()
 registration_form = UserRegistrationForm()
 
 
 def user_login(request):
-    form = UserLoginForm(request.POST)
     if request.method == 'POST':
         form = UserLoginForm(request.POST)
         if form.is_valid():
@@ -94,22 +101,6 @@ def user_password_reset(request):
     return render(request, 'index.html', {'login_form': form})
 
 
-def view_index(request):
-    """ Main page."""
-    return render(request, 'index.html', {
-        'login_form': login_form,
-        'registration_form': registration_form
-    })
-
-
-def view_boxes(request):
-    """ Boxes page."""
-    return render(request, 'boxes.html', {
-        'login_form': login_form,
-        'registration_form': registration_form
-    })
-
-
 @login_required
 def view_account(request):
     """ Account page."""
@@ -122,3 +113,106 @@ def view_account(request):
         'rents': list(enumerate(rents, 1)),
     }
     return render(request, 'my-rent.html', context)
+
+
+def view_index(request):
+    """ Main page."""
+    qs = Storage.objects.all()
+    qs = qs.annotate(
+            free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
+            count_boxes=Count('boxes'),
+            min_price=Min('boxes__price', )
+        ).order_by('?').first()
+    context = {
+        'storage': qs
+    }
+    return render(request, 'index.html', context)
+
+
+def view_boxes(request):
+    """ Boxes page."""
+    return render(request, 'boxes.html', {
+        'login_form': login_form,
+        'registration_form': registration_form
+    })
+
+
+def view_storages(request):
+    storages = Storage.objects.all()
+    storages = storages.annotate(
+        free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
+        count_boxes=Count('boxes'),
+        min_price=Min('boxes__price', )
+    )
+    try:
+        storage_id = request.GET['storage']
+        storage = storages.get(id=storage_id)
+    except:
+        storage = storages.order_by('?').first()
+    boxes = Box.objects.filter(storage=storage)
+    return render(request, 'storages.html', {
+        'storages': storages,
+        'storage': storage,
+    })
+
+@require_http_methods(['POST'])
+def get_boxes(request):
+    """
+    return:: JsonResponse
+    """
+    data = request.POST
+    print(data)
+    if data:
+        storage_id = data['storage_id']
+        storage = Storage.objects.get(id=storage_id)
+        boxes = Box.objects.filter(storage=storage)
+        return JsonResponse({'boxes': boxes})
+    else:
+        pass
+
+
+@login_required
+#@require_http_methods(['GET', 'POST'])
+def create_order(request):
+
+    if request.method == 'POST':
+        form = OrderForm(request.POST)
+        context = {
+            'form': form
+        }
+        if form.is_valid():
+            order = form.save(commit=False)
+            order.profile = Profile.objects.get(user=request.user)
+            order.box = Box.objects.get(id=request.POST['box_id'])
+            uidb64 = urlsafe_base64_encode(str(order.pk).encode())
+            url_confirmation = request.build_absolute_uri(
+            f"/order_confirm/{uidb64}/{order_confirmation_token.make_token(order)}/"
+            )
+            order.url_confirmation = url_confirmation
+            order.uidb64 = uidb64
+            order.save()
+            return redirect('storage:order_confirmation_done',)
+    else:
+        get_data = request.GET
+        form = OrderForm()
+        context = {
+            'form': form,
+            'box_id': get_data['box_id'][0]
+        }
+    return render(request, 'create-order.html', context)
+
+
+def order_confirmation_done(request):
+    return render(request, 'order_confirmation_done.html')
+
+
+def order_confirm(request, uidb64, token):
+    """ Подтверждение заказа. Пользователь перешел по ссылки в письме. """
+    order = Order.objects.get(uidb64=uidb64)
+    if order is not None and order.status == 2:
+        order.status = 3
+        order.save()
+        return render(request, 'order_confirmed.html', {'order': order})
+    else:
+        return render(request,'order_confirm_failed.html')
+

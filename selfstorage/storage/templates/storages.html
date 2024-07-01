@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load storage_tags %}
+{% block title %}Boxes{% endblock title %}
+
+{% block header %}
+{% endblock header %}
+{% block content %}
+
+<article class="mt-header">
+    <h1 class="text-center fw-bold SelfStorage_green mb-5">Аренда боксов</h1>
+    <h6 class="text-center SelfStorage_grey">Арендуйте склад индивидуального хранения по уникальной цене прямо
+        сейчас</h6>
+    <a href="#BOX" id="toBox" class="d-none"></a>
+    <!-- Склады -->
+    <ul class="nav nav-pills mb-3 d-flex justify-content-between" id="boxes-links" role="tablist">
+			{% for element in storages %}
+        <li class="nav-item flex-grow-1 mx-2" role="presentation">
+            <a href="{% url 'storage:boxes' %}?storage={{ element.id }}#BOX"
+               class="row text-decoration-none py-3 px-4 mt-5 SelfStorage__boxlink" aria-controls="pills-Moscow"
+               aria-selected="true">
+                <div class="col-12 col-lg-3 d-flex justify-content-center">
+                    <img src="{{ element.photo.url }}" alt="" class="mb-3 mb-lg-0">
+                </div>
+                <div class="col-12 col-md-4 col-lg-3 d-flex flex-column justify-content-center">
+                    <h4 class="text-center">{{ element.city }}</h4>
+                    <h6 class="text-center">{{ element.street }}</h6>
+                </div>
+                <div class="col-12 col-md-4 col-lg-3 d-flex flex-column justify-content-center">
+                    <h4 class="text-center">{{ element.free_boxes }} из {{ element.count_boxes }}</h4>
+                    <h6 class="text-center">Боксов свободно</h6>
+                </div>
+                <div class="col-12 col-md-4 col-lg-3 d-flex flex-column justify-content-center">
+                    <h4 class="text-center SelfStorage_green">от {{ element.min_price }} ₽</h4>
+                    <!--						<h6 class="text-center">Рядом с метро</h6>-->
+                </div>
+            </a>
+        </li>
+			{% endfor %}
+    </ul>
+</article>
+<article class="pt-header" id="BOX">
+    <div class="tab-content" id="boxes-content">
+        <div class="tab-pane fade show active" id="pills-Moscow" role="tabpanel" aria-labelledby="pills-Moscow-tab">
+            <h1 class="text-center mb-4 fw-bold">{{ storage.city }}, {{ storage.street }}</h1>
+            <div class="row">
+                <div class="col-12 col-lg-6">
+                    <div id="carouselExampleControls1" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            <div class="carousel-item active">
+                                <div class="d-flex flex-column align-items-center">
+                                    <img src="{{ storage.photo.url }}" alt="" width="500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Склад -->
+                <div class="col-12 col-lg-6">
+
+                    <div class="row">
+                        <p class="text-center text-lg-start SelfStorage_grey">Доступ по QR</p>
+                        <div class="col-6 d-flex flex-column align-items-center align-items-lg-start">
+                            <span class="fs_30 fw-bold SelfStorage_orange">{{ storage.temperature }} °С</span>
+                            <span class="SelfStorage_grey mb-3">Температура на складе</span>
+                            <span class="fs_30 fw-bold SelfStorage_orange">{{ storage.free_boxes }}  из {{ storage.count_boxes }}</span>
+                            <span class="SelfStorage_grey mb-3">Боксов свободно</span>
+                        </div>
+                        <div class="col-6 d-flex flex-column align-items-center align-items-lg-start">
+                            <span class="fs_30 fw-bold SelfStorage_orange">до 3.5 м</span>
+                            <span class="SelfStorage_grey mb-3">Высота потолка</span>
+                            <span class="fs_30 fw-bold SelfStorage_orange">от {{ storage.min_price }} ₽</span>
+                            <span class="SelfStorage_grey mb-3">Оплата за месяц</span>
+                        </div>
+                        <div class="d-flex flex-column align-items-center align-items-lg-start">
+                            <a href="#pills-tab" role="button"
+                               class="btn w-75 fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Арендовать
+                                бокс</a>
+                            <button class="btn w-75 fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_orange SelfStorage__btn2_orange">
+                                Позвонить мне
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+	<div class="tab-content" id="pills-tabContent">
+        <div class="tab-pane fade show active" id="pills-all" role="tabpanel" aria-labelledby="pills-home-tab">
+            {% boxes storage_id=storage.pk %}
+        </div>
+    </div>
+</article>
+{% endblock content %}
+{% block script %}
+<script>
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl)
+    })
+</script>
+{% endblock script %}
