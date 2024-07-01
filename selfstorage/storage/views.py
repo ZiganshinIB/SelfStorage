@@ -121,7 +121,7 @@ def view_storages(request):
         min_price=Min('boxes__price', )
     )
     try:
-        storage_id = request.GET['storage_id']
+        storage_id = request.GET['storage']
         storage = storages.get(id=storage_id)
     except:
         storage = storages.order_by('?').first()
