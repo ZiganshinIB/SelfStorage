@@ -28,10 +28,12 @@ def get_storages(storage_id=None):
     return context
 
 
-@register.inclusion_tag('hello.html')
-def example_include_tag():
+@register.inclusion_tag('boxes.html')
+def boxes(storage_id, area=None):
+    storage_id = int(storage_id)
+    boxes = Box.objects.filter(storage__pk=storage_id)
     context = {
-        'key': 'value',
+        'boxes': boxes
     }
     return context
 

@@ -7,7 +7,8 @@ from django.shortcuts import render
 from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
 from django.utils.http import urlsafe_base64_encode
-import random
+# JSONResponse
+from django.http import JsonResponse
 
 from .tokens import order_confirmation_token
 
@@ -112,8 +113,7 @@ def view_index(request):
     return render(request, 'index.html', context)
 
 
-def view_boxes(request):
-    """ Boxes page."""
+def view_storages(request):
     storages = Storage.objects.all()
     storages = storages.annotate(
         free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
@@ -126,13 +126,28 @@ def view_boxes(request):
     except:
         storage = storages.order_by('?').first()
     boxes = Box.objects.filter(storage=storage)
-
-    context = {
+    return render(request, 'storages.html', {
         'storages': storages,
         'storage': storage,
-        'boxes': boxes,
-    }
-    return render(request, 'boxes.html', context)
+    })
+
+
+@require_http_methods(['POST'])
+def get_boxes(request):
+    """
+    return:: JsonResponse
+    """
+    data = request.POST
+    print(data)
+    if data:
+        storage_id = data['storage_id']
+        storage = Storage.objects.get(id=storage_id)
+        boxes = Box.objects.filter(storage=storage)
+        return JsonResponse({'boxes': boxes})
+    else:
+        pass
+
+
 
 
 @login_required
