@@ -6,6 +6,8 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 from django.utils.http import urlsafe_base64_encode
 # JSONResponse
 from django.http import JsonResponse
@@ -13,7 +15,7 @@ from django.http import JsonResponse
 from .tokens import order_confirmation_token
 
 from .forms import UserLoginForm, UserRegistrationForm, UserPasswordResetForm, OrderForm
-from .models import Profile, Order, Box, Rent, Storage
+from .models import Profile, Rent, Order, Box, Rent, Storage
 
 login_form = UserLoginForm()
 registration_form = UserRegistrationForm()
@@ -99,6 +101,20 @@ def user_password_reset(request):
     return render(request, 'index.html', {'login_form': form})
 
 
+@login_required
+def view_account(request):
+    """ Account page."""
+
+    profile = Profile.objects.get(user=request.user)  # get(id=5)
+    rents = Rent.objects.filter(profile=profile)
+
+    context = {
+        'profile': profile,
+        'rents': list(enumerate(rents, 1)),
+    }
+    return render(request, 'my-rent.html', context)
+
+
 def view_index(request):
     """ Main page."""
     qs = Storage.objects.all()
@@ -111,6 +127,14 @@ def view_index(request):
         'storage': qs
     }
     return render(request, 'index.html', context)
+
+
+def view_boxes(request):
+    """ Boxes page."""
+    return render(request, 'boxes.html', {
+        'login_form': login_form,
+        'registration_form': registration_form
+    })
 
 
 def view_storages(request):
@@ -131,7 +155,6 @@ def view_storages(request):
         'storage': storage,
     })
 
-
 @require_http_methods(['POST'])
 def get_boxes(request):
     """
@@ -146,19 +169,6 @@ def get_boxes(request):
         return JsonResponse({'boxes': boxes})
     else:
         pass
-
-
-
-
-@login_required
-def view_account(request):
-    """ Account page."""
-
-    profile = Profile.objects.get(user=request.user)
-    context = {
-        'profile': profile
-    }
-    return render(request, 'my-rent.html', context)
 
 
 @login_required
@@ -205,3 +215,4 @@ def order_confirm(request, uidb64, token):
         return render(request, 'order_confirmed.html', {'order': order})
     else:
         return render(request,'order_confirm_failed.html')
+
