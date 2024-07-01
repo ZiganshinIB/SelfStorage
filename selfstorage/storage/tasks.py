@@ -104,7 +104,7 @@ def send_daily_email_rental_expires_soon():
 def cancellation_of_order_by_time():
     # Отмена заказа по истечению срока (1 час)
     today = datetime.now().date() - timedelta(hours=1)
-    orders = Order.objects.filter(updated_at__lt=today)
+    orders = Order.objects.filter(updated_at__lt=today, status=2)
     for order in orders:
         order.status = 4
         order.save()
