@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from django.db.models import Count, Min, Q
 
@@ -129,10 +130,32 @@ class MessageModel(admin.ModelAdmin):
         return False
 
 
+# Кастомная форма для сохранения Order в админ панели
+class OrderForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = (
+            'profile',
+            'box',
+            'from_city',
+            'from_street',
+            'has_delivery',
+            'start_rent',
+            'end_rent',
+            'price',
+            'status',)
+
+    def clean_box(self):
+        cd = self.cleaned_data
+        if cd['box'].is_active == False:
+            raise forms.ValidationError('Такого Box уже занять.')
+        return self.cleaned_data['box']
+
+
 @admin.register(Order)
 class OrderModel(admin.ModelAdmin):
     """ Заказ """
-
+    form = OrderForm
     fields = (
         'profile',
         'box',
@@ -147,8 +170,15 @@ class OrderModel(admin.ModelAdmin):
         'updated_at', )
     readonly_fields = ('status','created_at', 'updated_at',)
 
+    def clean_box(self):
+        cd = self.cleaned_data
+
+        return self.cleaned_data['box']
+
     # Запрещаем добовлять новые записи
     def has_add_permission(self, request, obj=None):
         return False
+
+
 
 

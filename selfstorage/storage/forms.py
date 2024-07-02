@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy
 from django.utils import timezone
+from phonenumber_field.formfields import PhoneNumberField
 
 from .models import Order
 
@@ -105,10 +106,20 @@ class UserRegistrationForm(forms.ModelForm):
             }
         )
     )
+    phone = PhoneNumberField(
+        label=False,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'form-control  border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey',
+                'placeholder': 'Телефон',
+                'name': 'PHONE'
+            }
+        )
+    )
 
     class Meta:
         model = UserModel
-        fields = ['email', 'first_name', 'last_name']
+        fields = ['email', 'first_name', 'last_name', 'phone']
         widgets = {
             'email': forms.EmailInput(
                 attrs={

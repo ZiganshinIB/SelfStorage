@@ -65,16 +65,25 @@ def user_register(request):
     if request.method == 'POST':
         user_form = UserRegistrationForm(request.POST)
         if user_form.is_valid():
+            cd = user_form.cleaned_data
             # Новый пользователь из формы без загрузки в базу данных
             new_user = user_form.save(commit=False)
+            new_user.username = cd['email']
             # Установить пароль
             new_user.set_password(
-                user_form.cleaned_data['password'])
+                cd['password'])
             # Save the User object
             new_user.save()
-            return render(request,
-                          'registration/register_done.html',
-                          {'new_user': new_user})
+            new_user.profile.phone = cd['phone']
+            new_user.profile.save()
+            # authenticate() - возвращает None если пользователь не найден
+            user = authenticate(
+                request,
+                username=cd['email'],
+                password=cd['password']
+            )
+            login(request, user)
+            return redirect('storage:account')
     else:
         user_form = UserRegistrationForm()
     return render(request,
@@ -149,11 +158,12 @@ def view_storages(request):
         storage = storages.get(id=storage_id)
     except:
         storage = storages.order_by('?').first()
-    boxes = Box.objects.filter(storage=storage)
+    boxes = Box.objects.filter(storage=storage, is_active=True)
     return render(request, 'storages.html', {
         'storages': storages,
         'storage': storage,
     })
+
 
 @require_http_methods(['POST'])
 def get_boxes(request):
@@ -165,7 +175,7 @@ def get_boxes(request):
     if data:
         storage_id = data['storage_id']
         storage = Storage.objects.get(id=storage_id)
-        boxes = Box.objects.filter(storage=storage)
+        boxes = Box.objects.filter(storage=storage, is_active=True)
         return JsonResponse({'boxes': boxes})
     else:
         pass

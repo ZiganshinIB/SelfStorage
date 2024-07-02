@@ -19,7 +19,7 @@ def get_storages(storage_id=None):
         storage = storages.filter(id=storage_id)
     else:
         storage = storages.order_by('?').first()
-    boxes = Box.objects.filter(storage=storage)
+    boxes = Box.objects.filter(storage=storage, is_active=True)
     context = {
         'storages': storages,
         'storage': storage,
@@ -31,7 +31,7 @@ def get_storages(storage_id=None):
 @register.inclusion_tag('boxes.html')
 def boxes(storage_id, area=None):
     storage_id = int(storage_id)
-    boxes = Box.objects.filter(storage__pk=storage_id)
+    boxes = Box.objects.filter(storage__pk=storage_id, is_active=True)
     context = {
         'boxes': boxes
     }
