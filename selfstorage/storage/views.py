@@ -264,6 +264,7 @@ def order_confirm(request, uidb64, token):
 def view_delivery_partial(request):
 
     extra = None
+    end = None
 
     if request.POST.get('delivery'):
         rent_id = request.POST.get('delivery')
@@ -294,10 +295,16 @@ def view_delivery_partial(request):
             extra = per_month * 12
         current_rent.price += extra
         current_rent.save()
+    else:
+        end = True
+        rent_id = request.POST.get('end')
+        current_rent = Rent.objects.get(id=rent_id)
+        current_rent.delete()
 
     context = {
         'rent': current_rent,
         'extra': extra,
+        'end': end,
     }
 
     return render(request, 'my-rent-delivery-partial.html', context)
