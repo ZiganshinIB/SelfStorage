@@ -32,7 +32,7 @@
 							<h4>{{ profile.user.first_name }} {{ profile.user.last_name }}</h4>
 						</div>
 						<div class="col-12 col-sm-7 d-flex flex-column">
-							<form>
+							<form method="post" action="{% url 'storage:profile_edit' %}">
 								<label class="fs_24 SelfStorage_green ms-2" for="EMAIL">E-mail</label>
 								<input type="email" name="EMAIL_EDIT" id="EMAIL" class="form-control fs_24 ps-2 SelfStorage__input" value="{{ profile.user.email }}" disabled>
 								<label class="fs_24 SelfStorage_green ms-2" for="PHONE">Телефон</label>
@@ -40,7 +40,8 @@
 								<label class="fs_24 SelfStorage_green ms-2" for="PASSWORD">Пароль</label>
 								<input type="password" name="PASSWORD_EDIT" id="PASSWORD" class="form-control fs_24 ps-2 SelfStorage__input" value="111111111" disabled>
 								<button type="submit" class="btn SelfStorage_green ps-1" id="save" style="display: none">Сохранить</button>
-								<a class="btn SelfStorage_orange ps-1" id="edit">Редактировать</a>
+								<button class="btn SelfStorage_orange ps-1" id="edit">Редактировать</button>
+								{% csrf_token %}
 								<script>
 									document.getElementById('edit').addEventListener('click', e => {
 										e.preventDefault()

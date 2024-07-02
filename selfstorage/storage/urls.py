@@ -15,6 +15,7 @@ urlpatterns = [
     path('boxes/', views.view_storages, name='boxes'),
     path('boxes/api/get/', views.get_boxes, name='get_boxes'),
     path('account/', views.view_account, name='account'),
+    path('account/edit/', views.profile_edit, name='profile_edit'),
     path('order/', views.create_order, name='create_order'),
     path('order_confirmation/done/', views.order_confirmation_done, name='order_confirmation_done'),
     path('order_confirm/<uidb64>/<token>/', views.order_confirm, name='order_confirm'),
