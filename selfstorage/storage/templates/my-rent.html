@@ -92,7 +92,7 @@
 							<div><button data-toggle-id="more-time-{{ rent.0 }}" class="btn fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Продлить аренду</button></div>
 							<div id="more-time-{{ rent.0 }}" hidden>
 								<h4>Выберите на сколько продлить аренду</h4>
-								<form action="" method="post">{% csrf_token %}
+								<form action="{% url 'storage:delivery-partial' %}" method="post">{% csrf_token %}
 									{% for period in periods %}
 										<button type="submit" value="{{ period }}, {{ rent.1.id }}" name="duration" class="btn fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">{{ period }}</button>
 									{% endfor %}

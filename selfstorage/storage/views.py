@@ -22,6 +22,15 @@ login_form = UserLoginForm()
 registration_form = UserRegistrationForm()
 
 
+PERIODS = {
+        'День': datetime.timedelta(days=1),
+        'Неделя': datetime.timedelta(weeks=1),
+        'Месяц': datetime.timedelta(days=30),
+        'Год': datetime.timedelta(days=365),
+    }
+DELIVERY_PRICE = 1250
+
+
 def user_login(request):
     if request.method == 'POST':
         form = UserLoginForm(request.POST)
@@ -114,24 +123,8 @@ def user_password_reset(request):
 @login_required
 def view_account(request):
     """ Account page."""
-    PERIODS = {
-        'День': datetime.timedelta(days=1),
-        'Неделя': datetime.timedelta(weeks=1),
-        'Месяц': datetime.timedelta(days=30),
-        'Год': datetime.timedelta(days=365),
-    }
-
     profile = Profile.objects.get(user=request.user)
     rents = Rent.objects.filter(profile=profile)
-
-    if request.method == 'POST':
-        if request.POST.get('duration'):
-            extention = request.POST.get('duration')
-            rent_id = extention.split(', ')
-            period, rent_id = extention.split(', ')
-            current_rent = Rent.objects.get(id=rent_id)
-            current_rent.end += PERIODS[period]
-            current_rent.save()
 
     context = {
         'profile': profile,
@@ -269,7 +262,8 @@ def order_confirm(request, uidb64, token):
 
 
 def view_delivery_partial(request):
-    DELIVERY_PRICE = 1250
+
+    extra = None
 
     if request.POST.get('delivery'):
         rent_id = request.POST.get('delivery')
@@ -282,7 +276,28 @@ def view_delivery_partial(request):
         current_rent = Rent.objects.get(id=rent_id)
         current_rent.partial = True
         current_rent.save()
+    elif request.POST.get('duration'):
+        extention = request.POST.get('duration')
+        rent_id = extention.split(', ')
+        period, rent_id = extention.split(', ')
+        current_rent = Rent.objects.get(id=rent_id)
+        current_rent.end += PERIODS[period]
 
-    context = {'rent': current_rent}
+        per_month = current_rent.box.price
+        if period == 'День':
+            extra = per_month / 30
+        elif period == 'Неделя':
+            extra = per_month / 4
+        elif period == 'Месяц':
+            extra = per_month
+        else:
+            extra = per_month * 12
+        current_rent.price += extra
+        current_rent.save()
+
+    context = {
+        'rent': current_rent,
+        'extra': extra,
+    }
 
     return render(request, 'my-rent-delivery-partial.html', context)
