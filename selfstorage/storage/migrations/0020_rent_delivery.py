@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('storage', '0018_order_url_confirmation_alter_order_uidb64'),
+        ('storage', '0019_alter_rent_from_city_alter_rent_from_street_and_more'),
     ]
 
     operations = [
