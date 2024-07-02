@@ -1,5 +1,5 @@
 from django import template
-from django.db.models import Count, Min
+from django.db.models import Count, Min, Q
 
 from storage.models import Storage, Box
 
@@ -13,7 +13,7 @@ def get_storages(storage_id=None):
     storages = storages.annotate(
         free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
         count_boxes=Count('boxes'),
-        min_price=Min('boxes__price', )
+        min_price=Min('boxes__price', filter=Q(boxes__is_active=True) )
     )
     if storage_id:
         storage = storages.filter(id=storage_id)

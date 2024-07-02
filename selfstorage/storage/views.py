@@ -130,7 +130,7 @@ def view_index(request):
     qs = qs.annotate(
             free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
             count_boxes=Count('boxes'),
-            min_price=Min('boxes__price', )
+            min_price=Min('boxes__price', filter=Q(boxes__is_active=True))
         ).order_by('?').first()
     context = {
         'storage': qs
@@ -151,7 +151,7 @@ def view_storages(request):
     storages = storages.annotate(
         free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
         count_boxes=Count('boxes'),
-        min_price=Min('boxes__price', )
+        min_price=Min('boxes__price', filter=Q(boxes__is_active=True))
     )
     try:
         storage_id = request.GET['storage']
