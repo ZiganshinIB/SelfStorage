@@ -92,18 +92,21 @@
 							<div><button data-toggle-id="more-time-{{ rent.0 }}" class="btn fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Продлить аренду</button></div>
 							<div id="more-time-{{ rent.0 }}" hidden>
 								<h4>Выберите на сколько продлить аренду</h4>
-								<form action="#" method="post">	
-									<button type="submit" value="day" class="btn fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">День</button>
-									<button type="submit" value="week" class="btn fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Неделя</button>
-									<button type="submit" value="month" class="btn fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Месяц</button>
-									<button type="submit" value="year" class="btn fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Год</button>
+								<form action="" method="post">{% csrf_token %}
+									{% for period in periods %}
+										<button type="submit" value="{{ period }}, {{ rent.1.id }}" name="duration" class="btn fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">{{ period }}</button>
+									{% endfor %}
 								</form>
 							</div>
 							<div><button data-toggle-id="qr-{{ rent.0 }}" class="btn fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_orange SelfStorage__btn2_orange mb-3">Открыть бокс</button></div>
 							<div id="qr-{{ rent.0 }}" hidden>
 								<img src="https://api.qrserver.com/v1/create-qr-code/?data={{ rent.0 }}&amp;size=300x300" alt="" title="" />
-								<h4>Можно заказать доставку на дом за доплату</h4>
-								<h4>Вещи можно будет вернуть, всё в порядке</h4>
+								<form action="{% url 'storage:delivery-partial' %}" method="post">{% csrf_token %}
+									<h4>Можно заказать доставку на дом за 1250р.</h4>
+									<button type="submit" value="{{ rent.1.id }}" name="delivery" class="btn fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Заказать доставку</button>
+									<button type="submit" value="{{ rent.1.id }}" name="partial" class="btn fs_24 px-5 py-3 text-white border-8 SelfStorage__bg_green SelfStorage__btn2_green mb-3">Забрать только часть вещей</button>
+								</form>
+								
 							</div>
 							<a href="{% url 'storage:faq' %}" class="SelfStorage_orange">Нужна помощь?</a>
 						{% endfor %}

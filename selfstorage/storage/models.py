@@ -119,6 +119,8 @@ class Rent(models.Model):
     start = models.DateTimeField(verbose_name='Начало аренды',)
     end = models.DateTimeField(verbose_name='Конец аренды')
     status = models.IntegerField(verbose_name='Статус', choices=RentStatus, null=True)
+    delivery = models.BooleanField(verbose_name='Доставка', default=False)
+    partial = models.BooleanField(verbose_name='Частичный забор вещей', default=False)
 
     class Meta:
         verbose_name = 'Аренда'

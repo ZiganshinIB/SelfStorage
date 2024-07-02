@@ -12,8 +12,9 @@ from django.utils.http import urlsafe_base64_encode
 # JSONResponse
 from django.http import JsonResponse
 
-from .tokens import order_confirmation_token
+import datetime
 
+from .tokens import order_confirmation_token
 from .forms import UserLoginForm, UserRegistrationForm, UserPasswordResetForm, OrderForm
 from .models import Profile, Rent, Order, Box, Rent, Storage
 
@@ -113,12 +114,29 @@ def user_password_reset(request):
 @login_required
 def view_account(request):
     """ Account page."""
-    profile = Profile.objects.get(user=request.user)  # get(id=5)
+    PERIODS = {
+        'День': datetime.timedelta(days=1),
+        'Неделя': datetime.timedelta(weeks=1),
+        'Месяц': datetime.timedelta(days=30),
+        'Год': datetime.timedelta(days=365),
+    }
+
+    profile = Profile.objects.get(user=request.user)
     rents = Rent.objects.filter(profile=profile)
+
+    if request.method == 'POST':
+        if request.POST.get('duration'):
+            extention = request.POST.get('duration')
+            rent_id = extention.split(', ')
+            period, rent_id = extention.split(', ')
+            current_rent = Rent.objects.get(id=rent_id)
+            current_rent.end += PERIODS[period]
+            current_rent.save()
 
     context = {
         'profile': profile,
         'rents': list(enumerate(rents, 1)),
+        'periods': PERIODS,
     }
     return render(request, 'my-rent.html', context)
 
@@ -204,7 +222,7 @@ def get_boxes(request):
 
 
 @login_required
-#@require_http_methods(['GET', 'POST'])
+# @require_http_methods(['GET', 'POST'])
 def create_order(request):
     if request.method == 'POST':
         form = OrderForm(request.POST)
@@ -219,7 +237,7 @@ def create_order(request):
             order.box = Box.objects.get(id=box_id)
             uidb64 = urlsafe_base64_encode(str(order.pk).encode())
             url_confirmation = request.build_absolute_uri(
-            f"/order_confirm/{uidb64}/{order_confirmation_token.make_token(order)}/"
+                f"/order_confirm/{uidb64}/{order_confirmation_token.make_token(order)}/"
             )
             order.url_confirmation = url_confirmation
             order.uidb64 = uidb64
@@ -247,5 +265,24 @@ def order_confirm(request, uidb64, token):
         order.save()
         return render(request, 'order_confirmed.html', {'order': order})
     else:
-        return render(request,'order_confirm_failed.html')
+        return render(request, 'order_confirm_failed.html')
 
+
+def view_delivery_partial(request):
+    DELIVERY_PRICE = 1250
+
+    if request.POST.get('delivery'):
+        rent_id = request.POST.get('delivery')
+        current_rent = Rent.objects.get(id=rent_id)
+        current_rent.delivery = True
+        current_rent.price += DELIVERY_PRICE
+        current_rent.save()
+    elif request.POST.get('partial'):
+        rent_id = request.POST.get('partial')
+        current_rent = Rent.objects.get(id=rent_id)
+        current_rent.partial = True
+        current_rent.save()
+
+    context = {'rent': current_rent}
+
+    return render(request, 'my-rent-delivery-partial.html', context)
