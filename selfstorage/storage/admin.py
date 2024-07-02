@@ -23,6 +23,9 @@ class ProfileAdmin(admin.ModelAdmin):
         return obj.user.email
     user_email.short_description = 'Почта'
 
+    def has_add_permission(self, request):
+        return False
+
 
 @admin.register(Storage)
 class StorageAdmin(admin.ModelAdmin):
