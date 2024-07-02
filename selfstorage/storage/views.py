@@ -116,12 +116,13 @@ def view_account(request):
     rents = Rent.objects.filter(profile=profile)
 
     if request.method == 'POST':
-        extention = request.POST.get('duration')
-        rent_id = extention.split(', ')
-        period, rent_id = extention.split(', ')
-        current_rent = Rent.objects.get(id=rent_id)
-        current_rent.end += PERIODS[period]
-        current_rent.save()
+        if request.POST.get('duration'):
+            extention = request.POST.get('duration')
+            rent_id = extention.split(', ')
+            period, rent_id = extention.split(', ')
+            current_rent = Rent.objects.get(id=rent_id)
+            current_rent.end += PERIODS[period]
+            current_rent.save()
 
     context = {
         'profile': profile,
@@ -231,3 +232,23 @@ def order_confirm(request, uidb64, token):
         return render(request, 'order_confirmed.html', {'order': order})
     else:
         return render(request, 'order_confirm_failed.html')
+
+
+def view_delivery_partial(request):
+    DELIVERY_PRICE = 1250
+
+    if request.POST.get('delivery'):
+        rent_id = request.POST.get('delivery')
+        current_rent = Rent.objects.get(id=rent_id)
+        current_rent.delivery = True
+        current_rent.price += DELIVERY_PRICE
+        current_rent.save()
+    elif request.POST.get('partial'):
+        rent_id = request.POST.get('partial')
+        current_rent = Rent.objects.get(id=rent_id)
+        current_rent.partial = True
+        current_rent.save()
+
+    context = {'rent': current_rent}
+
+    return render(request, 'my-rent-delivery-partial.html', context)
