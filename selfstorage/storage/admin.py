@@ -73,7 +73,7 @@ class RentAdmin(admin.ModelAdmin):
         'status')
     readonly_fields = ('user_full_name', 'profile_phone', 'user_email', 'box_price')
 
-    list_display = ('user_full_name', 'box', 'end')
+    list_display = ('user_full_name', 'user_email', 'from_city', 'from_street', 'price', 'box', 'end')
     list_filter = ('end', 'status')
     ordering = ('end',)
 
@@ -94,6 +94,15 @@ class RentAdmin(admin.ModelAdmin):
     def box_price(self, obj):
         return obj.box.price
     box_price.short_description = 'Цена Ящика'
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Advertising)
