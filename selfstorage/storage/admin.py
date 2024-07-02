@@ -198,6 +198,9 @@ class OrderModel(admin.ModelAdmin):
         'created_at',
         'updated_at',)
 
+    list_display = ('profile', 'box', 'from_city', 'from_street', 'has_delivery', 'start_rent', 'end_rent', 'price', 'status', 'created_at', 'updated_at')
+    list_filter = ('status', 'created_at', 'updated_at')
+
     # Запрещаем добовлять новые записи
     def has_add_permission(self, request, obj=None):
         return False
@@ -207,6 +210,19 @@ class OrderModel(admin.ModelAdmin):
             return False
         return True
 
+    def has_delete_permission(self, request, obj=None):
+        if not obj is None and obj.status != 1 and obj.status != 4:
+            return False
+        return True
 
+    # Набор объектов которые отображаются в админ панели
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+    #     return qs.filter(box__is_active=True)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'box':
+            kwargs['queryset'] = Box.objects.filter(is_active=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
