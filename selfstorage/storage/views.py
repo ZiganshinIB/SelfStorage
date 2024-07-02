@@ -113,7 +113,6 @@ def user_password_reset(request):
 @login_required
 def view_account(request):
     """ Account page."""
-
     profile = Profile.objects.get(user=request.user)  # get(id=5)
     rents = Rent.objects.filter(profile=profile)
 
@@ -122,6 +121,29 @@ def view_account(request):
         'rents': list(enumerate(rents, 1)),
     }
     return render(request, 'my-rent.html', context)
+
+
+@login_required
+@require_http_methods(['POST'])
+def profile_edit(request):
+    data = request.POST
+    profile = Profile.objects.get(user=request.user)
+    profile.phone = data['PHONE_EDIT']
+    profile.user.email = data['EMAIL_EDIT']
+    profile.user.set_password(
+        data['PASSWORD_EDIT'])
+    profile.user.save()
+    profile.save()
+    user = authenticate(
+        request,
+        username=data['EMAIL_EDIT'],
+        password=data['PASSWORD_EDIT']
+    )
+    if user is not None:
+        if user.is_active:
+            login(request, user)
+            return redirect('storage:account')
+    return redirect('storage:account')
 
 
 def view_index(request):

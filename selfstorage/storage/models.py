@@ -309,3 +309,8 @@ def save_rent_box(sender, instance, **kwargs):
 def my_model_deleted(sender, instance, **kwargs):
     instance.box.is_active = True
     instance.box.save()
+
+@receiver(pre_delete, sender=Rent)
+def my_model_deleted(sender, instance, **kwargs):
+    instance.box.is_active = True
+    instance.box.save()
