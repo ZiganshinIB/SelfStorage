@@ -10,7 +10,11 @@ def send_daily_email_rental_expired():
     comments = "Аренда просрочено."
     overdue_rents = Rent.objects.filter(end__lt=today, status__in=[1, 3])
     for rent in overdue_rents:
+
         profile = rent.profile
+        if rent.status != 3:
+            rent.status = 3
+            rent.save()
         email = profile.user.email
         text = f"Уважаемый {profile.user.first_name} {profile.user.last_name}, \n\n" \
                f"Срок вашей аренды ящика {rent.box.snumber} истек {rent.end.strftime('%d.%m.%Y')}. " \
