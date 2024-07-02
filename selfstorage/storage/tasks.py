@@ -112,3 +112,11 @@ def cancellation_of_order_by_time():
     for order in orders:
         order.status = 4
         order.save()
+
+
+@shared_task
+def delete_old_rents():
+    today = datetime.now() - timedelta(days=30*6)
+    old_rents = Rent.objects.filter(end__lt=today)
+    for rent in old_rents:
+        rent.delete()
