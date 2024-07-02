@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import admin
 from django.db.models import Count, Min, Q
-
+from django.utils import timezone
 import requests
 from selfstorage import settings
 
@@ -151,6 +151,30 @@ class OrderForm(forms.ModelForm):
             raise forms.ValidationError('Такого Box уже занять.')
         return self.cleaned_data['box']
 
+    def clean_start_rent(self):
+        cd = self.cleaned_data
+        if cd['start_rent'] < timezone.now():
+            raise forms.ValidationError('Начало аренды не может быть меньше сегодняшней даты.')
+        return self.cleaned_data['start_rent']
+
+    def clean_end_rent(self):
+        cd = self.cleaned_data
+        if cd['end_rent'] < timezone.now():
+            raise forms.ValidationError('Конец аренды не может быть меньше сегодняшней даты.')
+        return self.cleaned_data['end_rent']
+
+    def clean_price(self):
+        cd = self.cleaned_data
+        if cd['price'] < 0:
+            raise forms.ValidationError('Цена не может быть отрицательной.')
+        return self.cleaned_data['price']
+
+    def clean(self):
+        cd = self.cleaned_data
+        if cd['start_rent'] > cd['end_rent']:
+            raise forms.ValidationError('Конец аренды не может быть меньше начала аренды.')
+        super().clean()
+
 
 @admin.register(Order)
 class OrderModel(admin.ModelAdmin):
@@ -168,16 +192,20 @@ class OrderModel(admin.ModelAdmin):
         'status',
         'created_at',
         'updated_at', )
-    readonly_fields = ('status','created_at', 'updated_at',)
-
-    def clean_box(self):
-        cd = self.cleaned_data
-
-        return self.cleaned_data['box']
+    readonly_fields = (
+        'profile',
+        'status',
+        'created_at',
+        'updated_at',)
 
     # Запрещаем добовлять новые записи
     def has_add_permission(self, request, obj=None):
         return False
+
+    def has_change_permission(self, request, obj=None):
+        if not obj is None and obj.status != 1:
+            return False
+        return True
 
 
 
