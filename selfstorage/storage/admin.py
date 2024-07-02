@@ -1,6 +1,7 @@
+from django import forms
 from django.contrib import admin
 from django.db.models import Count, Min, Q
-
+from django.utils import timezone
 import requests
 from selfstorage import settings
 
@@ -21,6 +22,9 @@ class ProfileAdmin(admin.ModelAdmin):
     def user_email(self, obj):
         return obj.user.email
     user_email.short_description = 'Почта'
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(Storage)
@@ -72,7 +76,7 @@ class RentAdmin(admin.ModelAdmin):
         'status')
     readonly_fields = ('user_full_name', 'profile_phone', 'user_email', 'box_price')
 
-    list_display = ('user_full_name', 'box', 'end')
+    list_display = ('user_full_name', 'user_email', 'from_city', 'from_street', 'price', 'box', 'end')
     list_filter = ('end', 'status')
     ordering = ('end',)
 
@@ -93,6 +97,15 @@ class RentAdmin(admin.ModelAdmin):
     def box_price(self, obj):
         return obj.box.price
     box_price.short_description = 'Цена Ящика'
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Advertising)
@@ -120,9 +133,6 @@ class AdvertisingModel(admin.ModelAdmin):
 @admin.register(Message)
 class MessageModel(admin.ModelAdmin):
     """ Сообщение """
-    # При создании сообщения можно указать все поля
-    # При редактировании сообщения можно указать только комментарии
-    # /changes/messages/
     fields = ('profile', 'email', 'subject', 'text', 'comments', 'created_at', )
     readonly_fields = ('created_at',)
 
@@ -132,12 +142,56 @@ class MessageModel(admin.ModelAdmin):
         return False
 
 
+# Кастомная форма для сохранения Order в админ панели
+class OrderForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = (
+            'profile',
+            'box',
+            'from_city',
+            'from_street',
+            'has_delivery',
+            'start_rent',
+            'end_rent',
+            'price',
+            'status',)
+
+    def clean_box(self):
+        cd = self.cleaned_data
+        if cd['box'].is_active == False:
+            raise forms.ValidationError('Такого Box уже занять.')
+        return self.cleaned_data['box']
+
+    def clean_start_rent(self):
+        cd = self.cleaned_data
+        if cd['start_rent'] < timezone.now():
+            raise forms.ValidationError('Начало аренды не может быть меньше сегодняшней даты.')
+        return self.cleaned_data['start_rent']
+
+    def clean_end_rent(self):
+        cd = self.cleaned_data
+        if cd['end_rent'] < timezone.now():
+            raise forms.ValidationError('Конец аренды не может быть меньше сегодняшней даты.')
+        return self.cleaned_data['end_rent']
+
+    def clean_price(self):
+        cd = self.cleaned_data
+        if cd['price'] < 0:
+            raise forms.ValidationError('Цена не может быть отрицательной.')
+        return self.cleaned_data['price']
+
+    def clean(self):
+        cd = self.cleaned_data
+        if cd['start_rent'] > cd['end_rent']:
+            raise forms.ValidationError('Конец аренды не может быть меньше начала аренды.')
+        super().clean()
+
+
 @admin.register(Order)
 class OrderModel(admin.ModelAdmin):
     """ Заказ """
-    # При создании заказа можно указать все поля
-    # При редактировании заказа можно указать только комментарии
-
+    form = OrderForm
     fields = (
         'profile',
         'box',
@@ -150,5 +204,37 @@ class OrderModel(admin.ModelAdmin):
         'status',
         'created_at',
         'updated_at', )
-    readonly_fields = ('created_at', 'updated_at',)
+    readonly_fields = (
+        'profile',
+        'status',
+        'created_at',
+        'updated_at',)
+
+    list_display = ('profile', 'box', 'from_city', 'from_street', 'has_delivery', 'start_rent', 'end_rent', 'price', 'status', 'created_at', 'updated_at')
+    list_filter = ('status', 'created_at', 'updated_at')
+
+    # Запрещаем добовлять новые записи
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        if not obj is None and obj.status != 1:
+            return False
+        return True
+
+    def has_delete_permission(self, request, obj=None):
+        if not obj is None and obj.status != 1 and obj.status != 4:
+            return False
+        return True
+
+    # Набор объектов которые отображаются в админ панели
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+    #     return qs.filter(box__is_active=True)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'box':
+            kwargs['queryset'] = Box.objects.filter(is_active=True)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 

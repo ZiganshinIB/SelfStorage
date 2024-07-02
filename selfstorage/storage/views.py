@@ -66,16 +66,25 @@ def user_register(request):
     if request.method == 'POST':
         user_form = UserRegistrationForm(request.POST)
         if user_form.is_valid():
+            cd = user_form.cleaned_data
             # Новый пользователь из формы без загрузки в базу данных
             new_user = user_form.save(commit=False)
+            new_user.username = cd['email']
             # Установить пароль
             new_user.set_password(
-                user_form.cleaned_data['password'])
+                cd['password'])
             # Save the User object
             new_user.save()
-            return render(request,
-                          'registration/register_done.html',
-                          {'new_user': new_user})
+            new_user.profile.phone = cd['phone']
+            new_user.profile.save()
+            # authenticate() - возвращает None если пользователь не найден
+            user = authenticate(
+                request,
+                username=cd['email'],
+                password=cd['password']
+            )
+            login(request, user)
+            return redirect('storage:account')
     else:
         user_form = UserRegistrationForm()
     return render(request,
@@ -132,13 +141,36 @@ def view_account(request):
     return render(request, 'my-rent.html', context)
 
 
+@login_required
+@require_http_methods(['POST'])
+def profile_edit(request):
+    data = request.POST
+    profile = Profile.objects.get(user=request.user)
+    profile.phone = data['PHONE_EDIT']
+    profile.user.email = data['EMAIL_EDIT']
+    profile.user.set_password(
+        data['PASSWORD_EDIT'])
+    profile.user.save()
+    profile.save()
+    user = authenticate(
+        request,
+        username=data['EMAIL_EDIT'],
+        password=data['PASSWORD_EDIT']
+    )
+    if user is not None:
+        if user.is_active:
+            login(request, user)
+            return redirect('storage:account')
+    return redirect('storage:account')
+
+
 def view_index(request):
     """ Main page."""
     qs = Storage.objects.all()
     qs = qs.annotate(
             free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
             count_boxes=Count('boxes'),
-            min_price=Min('boxes__price', )
+            min_price=Min('boxes__price', filter=Q(boxes__is_active=True))
         ).order_by('?').first()
     context = {
         'storage': qs
@@ -159,18 +191,19 @@ def view_storages(request):
     storages = storages.annotate(
         free_boxes=Count('boxes', filter=Q(boxes__is_active=True)),
         count_boxes=Count('boxes'),
-        min_price=Min('boxes__price', )
+        min_price=Min('boxes__price', filter=Q(boxes__is_active=True))
     )
     try:
         storage_id = request.GET['storage']
         storage = storages.get(id=storage_id)
     except:
         storage = storages.order_by('?').first()
-    boxes = Box.objects.filter(storage=storage)
+    boxes = Box.objects.filter(storage=storage, is_active=True)
     return render(request, 'storages.html', {
         'storages': storages,
         'storage': storage,
     })
+
 
 @require_http_methods(['POST'])
 def get_boxes(request):
@@ -182,7 +215,7 @@ def get_boxes(request):
     if data:
         storage_id = data['storage_id']
         storage = Storage.objects.get(id=storage_id)
-        boxes = Box.objects.filter(storage=storage)
+        boxes = Box.objects.filter(storage=storage, is_active=True)
         return JsonResponse({'boxes': boxes})
     else:
         pass
@@ -191,16 +224,17 @@ def get_boxes(request):
 @login_required
 # @require_http_methods(['GET', 'POST'])
 def create_order(request):
-
     if request.method == 'POST':
         form = OrderForm(request.POST)
+        box_id = request.POST['box']
         context = {
-            'form': form
+            'form': form,
+            'box': box_id
         }
         if form.is_valid():
             order = form.save(commit=False)
             order.profile = Profile.objects.get(user=request.user)
-            order.box = Box.objects.get(id=request.POST['box_id'])
+            order.box = Box.objects.get(id=box_id)
             uidb64 = urlsafe_base64_encode(str(order.pk).encode())
             url_confirmation = request.build_absolute_uri(
                 f"/order_confirm/{uidb64}/{order_confirmation_token.make_token(order)}/"
@@ -214,7 +248,7 @@ def create_order(request):
         form = OrderForm()
         context = {
             'form': form,
-            'box_id': get_data['box_id'][0]
+            'box': get_data['box'][0]
         }
     return render(request, 'create-order.html', context)
 
@@ -225,7 +259,7 @@ def order_confirmation_done(request):
 
 def order_confirm(request, uidb64, token):
     """ Подтверждение заказа. Пользователь перешел по ссылки в письме. """
-    order = Order.objects.get(uidb64=uidb64)
+    order = Order.objects.filter(uidb64=uidb64).first()
     if order is not None and order.status == 2:
         order.status = 3
         order.save()

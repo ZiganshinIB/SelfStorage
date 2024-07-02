@@ -1,9 +1,13 @@
+from datetime import datetime
+
 from django import forms
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy
+from django.utils import timezone
+from phonenumber_field.formfields import PhoneNumberField
 
 from .models import Order
 
@@ -102,10 +106,20 @@ class UserRegistrationForm(forms.ModelForm):
             }
         )
     )
+    phone = PhoneNumberField(
+        label=False,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'form-control  border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey',
+                'placeholder': 'Телефон',
+                'name': 'PHONE'
+            }
+        )
+    )
 
     class Meta:
         model = UserModel
-        fields = ['email', 'first_name', 'last_name']
+        fields = ['email', 'first_name', 'last_name', 'phone']
         widgets = {
             'email': forms.EmailInput(
                 attrs={
@@ -228,3 +242,21 @@ class OrderForm(forms.ModelForm):
             'start_rent': '',
             'end_rent': '',
         }
+
+    def clean_start_rent(self):
+        cd = self.cleaned_data
+        if cd['start_rent'] < timezone.now():
+            raise forms.ValidationError('Начало аренды не может быть меньше сегодняшней даты.')
+        return cd['start_rent']
+
+    def clean_end_rent(self):
+        cd = self.cleaned_data
+        if cd['end_rent'] < timezone.now():
+            raise forms.ValidationError('Конец аренды не может быть меньше сегодняшней даты.')
+        return cd['end_rent']
+
+    def clean(self):
+        cd = self.cleaned_data
+        if cd['start_rent'] > cd['end_rent']:
+            raise forms.ValidationError('Конец аренды не может быть меньше начала аренды.')
+        super().clean()

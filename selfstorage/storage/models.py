@@ -1,7 +1,7 @@
 import uuid
 
 from django.db import models
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, post_delete, pre_delete
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.dispatch import receiver
@@ -113,10 +113,10 @@ class Rent(models.Model):
     )
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Пользователь')
     box = models.ForeignKey(Box, on_delete=models.CASCADE, verbose_name='Ящик', related_name='rents')
-    from_city = models.CharField(max_length=255, verbose_name='Город', blank=True)
-    from_street = models.CharField(max_length=255, verbose_name='Улица', blank=True)
+    from_city = models.CharField(max_length=255, verbose_name='Город', blank=True, null=True)
+    from_street = models.CharField(max_length=255, verbose_name='Улица', blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена', default=0)
-    start = models.DateTimeField(verbose_name='Начало аренды', auto_now_add=True)
+    start = models.DateTimeField(verbose_name='Начало аренды',)
     end = models.DateTimeField(verbose_name='Конец аренды')
     status = models.IntegerField(verbose_name='Статус', choices=RentStatus, null=True)
     delivery = models.BooleanField(verbose_name='Доставка', default=False)
@@ -166,7 +166,6 @@ class Message(models.Model):
         return "{}: {}".format(self.email, self.subject)
 
     def save(self, *args, **kwargs):
-        print("save")
         is_new = self.pk is None
         super().save(*args, **kwargs)
         if is_new:
@@ -223,16 +222,31 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         if self.status == 1:
-            end_date = self.end_rent
-            start_date = self.start_rent
-            months_difference = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month) + (0 if start_date.day > end_date.day else 1)
-            self.price = self.box.price * months_difference
+            # Если это новая запись
+            if self.pk is None:
+                end_date = self.end_rent
+                start_date = self.start_rent
+                months_difference = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month) + (0 if start_date.day > end_date.day else 1)
+                self.price = self.box.price * months_difference
+            else:
+                self.status = 2
         if self.status == 2:
             self.send_confirmation_email()
-        if self.status == 3:
-            self.box.is_active = True
-        if self.status == 4:
             self.box.is_active = False
+        if self.status == 3:
+            rent = Rent(
+                profile=self.profile,
+                box=self.box,
+                from_city=self.from_city,
+                from_street=self.from_street,
+                status=1,
+                price=self.price,
+                start=self.start_rent,
+                end=self.end_rent
+            )
+            rent.save()
+        if self.status == 4:
+            self.box.is_active = True
         self.box.save()
         super().save(*args, **kwargs)
 
@@ -245,9 +259,13 @@ class Order(models.Model):
         }
         html_message = render_to_string('order_confirmation_email.html', context)
         plain_message = strip_tags(html_message)
-        from_email = settings.EMAIL_HOST_USER
-        recipient_list = [self.profile.user.email]
-        send_mail(subject, plain_message, from_email, recipient_list)
+        message = Message(profile=self.profile,
+                          email=self.profile.user.email,
+                          subject=subject,
+                          text=plain_message,
+                          comments="Подтверждение заказа"
+                          )
+        message.save()
 
 
 @receiver(pre_save, sender=Advertising)
@@ -287,4 +305,14 @@ def save_rent_box(sender, instance, **kwargs):
         instance.box.is_active = True
     if instance.status == 3:
         instance.box.is_active = False
+    instance.box.save()
+
+@receiver(pre_delete, sender=Order)
+def my_model_deleted(sender, instance, **kwargs):
+    instance.box.is_active = True
+    instance.box.save()
+
+@receiver(pre_delete, sender=Rent)
+def my_model_deleted(sender, instance, **kwargs):
+    instance.box.is_active = True
     instance.box.save()

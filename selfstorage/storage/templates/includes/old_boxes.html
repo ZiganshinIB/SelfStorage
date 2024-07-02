@@ -778,3 +778,43 @@
 		})
 	</script>
 {% endblock script %}
+
+
+  <h1 class="modal-title text-center fw-bold mb-3">Создание заявки</h1>
+
+    <label for="id_has_delivery">Требуется доставка:</label>
+
+
+      <input type="checkbox" name="has_delivery" class="form-check-input border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey" id="id_has_delivery">
+
+
+
+
+
+
+    <label for="id_start_rent">начало аренды:</label>
+
+
+      <input type="date" name="start_rent" class="form-control  border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey" placeholder="Дата начала аренды" required="" id="id_start_rent">
+
+
+
+
+
+
+    <label for="id_end_rent">конец аренды:</label>
+
+
+      <input type="date" name="end_rent" class="form-control  border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey" placeholder="Дата окончания аренды" required="" id="id_end_rent">
+
+
+        <input type="hidden" name="from_city" class="form-control  border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey" placeholder="Город" id="id_from_city"><input type="hidden" name="from_street" class="form-control  border-8 mb-4 py-3 px-5 border-0 fs_24 SelfStorage__bg_lightgrey" placeholder="Улица" id="id_from_street">
+
+
+
+
+  <input type="hidden" name="box" value="8">
+
+  <input type="hidden" name="csrfmiddlewaretoken" value="nCcAJyTfr34UL6KYaDy3yM7yJxkLwOm6lZje4J6DU8slO8rYUSJJHPK2m3nVltAt">
+  <button type="submit" class="btn border-8 py-3 px-5 mt-5 mb-3 w-100 text-white fs_24 SelfStorage__bg_orange SelfStorage__btn2_orange">Создать заявку</button>
+  <a href="/" class="SelfStorage_orange">Выйти на главную стрницу</a>
