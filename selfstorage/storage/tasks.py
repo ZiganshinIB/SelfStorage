@@ -11,10 +11,12 @@ def send_daily_email_rental_expired():
     overdue_rents = Rent.objects.filter(end__lt=today, status__in=[1, 3])
     for rent in overdue_rents:
         profile = rent.profile
+        if rent.status != 3:
+            rent.status = 3
         email = profile.user.email
         text = f"Уважаемый {profile.user.first_name} {profile.user.last_name}, \n\n" \
                f"Срок вашей аренды ящика {rent.box.snumber} истек {rent.end.strftime('%d.%m.%Y')}. " \
-               "Пожалуйста, заберите ваши вещи как можно скорее."
+               "Пожалуйста, заберите ваши вещи как можно скорее.\n"
         # Направляли ли мы ему ранее письмо?
         old_messages = Message.objects.filter(
             profile=profile,
@@ -25,6 +27,8 @@ def send_daily_email_rental_expired():
         # Если не отправляли уже месяц
         if not old_messages:
             subject = "Ваша аренда просрочена"
+            text += f" Цена вашей аренды увеличилась на { rent.box.price*1.2} руб. \n"
+            rent.price += rent.box.price*1.2
             message = Message(profile=profile, email=email, subject=subject, text=text, comments=comments)
             message.save()
 
@@ -104,7 +108,15 @@ def send_daily_email_rental_expires_soon():
 def cancellation_of_order_by_time():
     # Отмена заказа по истечению срока (1 час)
     today = datetime.now().date() - timedelta(hours=1)
-    orders = Order.objects.filter(updated_at__lt=today)
+    orders = Order.objects.filter(updated_at__lt=today, status=2)
     for order in orders:
         order.status = 4
         order.save()
+
+
+@shared_task
+def delete_old_rents():
+    today = datetime.now() - timedelta(days=30*6)
+    old_rents = Rent.objects.filter(end__lt=today)
+    for rent in old_rents:
+        rent.delete()

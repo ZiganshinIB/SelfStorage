@@ -1,8 +1,8 @@
 {% extends "registration/base.html" %}
 {% load static %}
-{% block title %}Login{% endblock title %}
+{% block title %}Register{% endblock title %}
 {% block form %}
-<form class="d-flex flex-column align-items-center" style="max-width: 420px" action="{% url 'storage:login' %}" method="post">
+<form class="d-flex flex-column align-items-center" style="max-width: 420px" action="{% url 'storage:register' %}" method="post">
   <h1 class="modal-title text-center fw-bold mb-3">Регистрация</h1>
 					{{ form.as_p }}
 					{% csrf_token %}

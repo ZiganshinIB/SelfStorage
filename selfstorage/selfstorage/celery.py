@@ -21,4 +21,8 @@ app.conf.beat_schedule = {
         'task': 'storage.tasks.cancellation_of_order_by_time',
         'schedule': crontab(minute="10"),
     },
+    'delete_old_rents': {
+        'task': 'storage.tasks.delete_old_rents',
+        'schedule': crontab(minute="30"),
+    },
 }

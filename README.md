@@ -77,6 +77,10 @@ pyhton3 manage.py createsuperuser
 ```shell
 python3 manage.py runserver
 ```
+также требуется запустить celery
+```shell
+celery -A selfstorage worker --beat --loglevel=ERROR
+```
 
 # Допольнительно
 ## Работа с ПЯ во `views.py`
