@@ -70,7 +70,7 @@
                         <div class="col-6 d-flex flex-column align-items-center align-items-lg-start">
                             <span class="fs_30 fw-bold SelfStorage_orange">до 3.5 м</span>
                             <span class="SelfStorage_grey mb-3">Высота потолка</span>
-                            <span class="fs_30 fw-bold SelfStorage_orange">от {{ storage.min_price }} ₽</span>
+                            <span class="fs_30 fw-bold SelfStorage_orange">от {% if storage.min_price %}{{ storage.min_price }} ₽{% else %} - {% endif %}</span>
                             <span class="SelfStorage_grey mb-3">Оплата за месяц</span>
                         </div>
                         <div class="d-flex flex-column align-items-center align-items-lg-start">
