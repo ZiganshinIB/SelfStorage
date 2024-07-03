@@ -61,7 +61,6 @@ class BoxAdmin(admin.ModelAdmin):
 
 @admin.register(Rent)
 class RentAdmin(admin.ModelAdmin):
-    # /changes/rents/
     fields = (
         'profile',
         'user_full_name',
@@ -142,12 +141,37 @@ class MessageModel(admin.ModelAdmin):
         return False
 
 
-# Кастомная форма для сохранения Order в админ панели
 class OrderForm(forms.ModelForm):
+    # storage = forms.ModelChoiceField(
+    #     queryset=Storage.objects.all(),
+    #     label='Склад',
+    #     required=True,
+    #     widget=forms.Select(attrs={'class': 'form-control'})
+    # )
+    # box = forms.ModelChoiceField(
+    #     label='Ящик',
+    #     required=True,
+    #     queryset=Box.objects.none(),
+    #     widget=forms.Select(attrs={'class': 'form-control'})
+    # )
+
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     if 'storage' in self.data:
+    #         try:
+    #             storage_id = int(self.data.get('storage'))
+    #             self.fields['box'].queryset = Box.objects.filter(storage_id=storage_id, is_active=True)
+    #         except (ValueError, TypeError):
+    #             pass
+    #
+    #     elif self.instance.pk: # Иначе, если это уже существующая заявка
+    #         self.fields['box'].queryset = Box.objects.filter(is_active=True, storage=self.instance.box.storage)
+
     class Meta:
         model = Order
         fields = (
             'profile',
+            # 'storage',
             'box',
             'from_city',
             'from_street',
@@ -159,8 +183,10 @@ class OrderForm(forms.ModelForm):
 
     def clean_box(self):
         cd = self.cleaned_data
+        if cd['box'] is None:
+            raise forms.ValidationError('Вы не выбрали ящик.')
         if cd['box'].is_active == False:
-            raise forms.ValidationError('Такого Box уже занять.')
+            raise forms.ValidationError(f'Такой ящик уже занять.')
         return self.cleaned_data['box']
 
     def clean_start_rent(self):
@@ -192,8 +218,11 @@ class OrderForm(forms.ModelForm):
 class OrderModel(admin.ModelAdmin):
     """ Заказ """
     form = OrderForm
+    # inlines = [BoxInline]
     fields = (
         'profile',
+        'user_email',
+        'profile_phone',
         'box',
         'from_city',
         'from_street',
@@ -206,12 +235,37 @@ class OrderModel(admin.ModelAdmin):
         'updated_at', )
     readonly_fields = (
         'profile',
+        'user_email',
+        'from_city',
+        'from_street',
+        'profile_phone',
         'status',
         'created_at',
         'updated_at',)
 
-    list_display = ('profile', 'box', 'from_city', 'from_street', 'has_delivery', 'start_rent', 'end_rent', 'price', 'status', 'created_at', 'updated_at')
-    list_filter = ('status', 'created_at', 'updated_at')
+    list_display = (
+        'profile',
+        'user_email',
+        'profile_phone',
+        'box',
+        'from_city',
+        'from_street',
+        'has_delivery',
+        'start_rent',
+        'end_rent',
+        'price',
+        'status')
+    list_filter = ('status', 'has_delivery', 'created_at', 'updated_at')
+    search_fields = ('profile__user__email', 'profile__phone', 'box__snumber', 'from_city', 'from_street')
+    ordering = ('status', 'updated_at', '-created_at')
+
+    def profile_phone(self, obj):
+        return obj.profile.phone
+    profile_phone.short_description = 'Телефон'
+
+    def user_email(self, obj):
+        return obj.profile.user.email
+    user_email.short_description = 'Почта'
 
     # Запрещаем добовлять новые записи
     def has_add_permission(self, request, obj=None):
