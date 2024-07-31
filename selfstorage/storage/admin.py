@@ -1,9 +1,15 @@
+from io import BytesIO
+
 from django import forms
 from django.contrib import admin
 from django.db.models import Count, Min, Q
 from django.utils import timezone
 import requests
 from selfstorage import settings
+from django.utils.http import urlsafe_base64_encode
+from django.utils import timezone
+
+from PIL import Image
 
 from .models import Advertising, Box, Rent, Storage, Profile, Message, Order
 
@@ -142,36 +148,10 @@ class MessageModel(admin.ModelAdmin):
 
 
 class OrderForm(forms.ModelForm):
-    # storage = forms.ModelChoiceField(
-    #     queryset=Storage.objects.all(),
-    #     label='Склад',
-    #     required=True,
-    #     widget=forms.Select(attrs={'class': 'form-control'})
-    # )
-    # box = forms.ModelChoiceField(
-    #     label='Ящик',
-    #     required=True,
-    #     queryset=Box.objects.none(),
-    #     widget=forms.Select(attrs={'class': 'form-control'})
-    # )
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     if 'storage' in self.data:
-    #         try:
-    #             storage_id = int(self.data.get('storage'))
-    #             self.fields['box'].queryset = Box.objects.filter(storage_id=storage_id, is_active=True)
-    #         except (ValueError, TypeError):
-    #             pass
-    #
-    #     elif self.instance.pk: # Иначе, если это уже существующая заявка
-    #         self.fields['box'].queryset = Box.objects.filter(is_active=True, storage=self.instance.box.storage)
-
     class Meta:
         model = Order
         fields = (
             'profile',
-            # 'storage',
             'box',
             'from_city',
             'from_street',
@@ -218,7 +198,6 @@ class OrderForm(forms.ModelForm):
 class OrderModel(admin.ModelAdmin):
     """ Заказ """
     form = OrderForm
-    # inlines = [BoxInline]
     fields = (
         'profile',
         'user_email',
@@ -281,10 +260,6 @@ class OrderModel(admin.ModelAdmin):
             return False
         return True
 
-    # Набор объектов которые отображаются в админ панели
-    # def get_queryset(self, request):
-    #     qs = super().get_queryset(request)
-    #     return qs.filter(box__is_active=True)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'box':

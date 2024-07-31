@@ -40,17 +40,6 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.last_name + ' ' + self.user.first_name
 
-    def save(
-        self, *args, **kwargs
-    ):
-        super().save(*args, **kwargs)
-
-        img = Image.open(self.photo)
-        if img.height > 180 or img.width > 180:
-            output_size = (200, 200)
-            img.thumbnail(output_size)
-            img.save(self.photo.path)
-
     class Meta:
         verbose_name = 'Профиль'
         verbose_name_plural = 'Профили'
@@ -65,17 +54,6 @@ class Storage(models.Model):
     class Meta:
         verbose_name = 'Склад'
         verbose_name_plural = 'Склады'
-
-    def save(
-            self, *args, **kwargs
-    ):
-        super().save(*args, **kwargs)
-
-        img = Image.open(self.photo)
-        if img.height > 180 or img.width > 180:
-            output_size = (200, 200)
-            img.thumbnail(output_size)
-            img.save(self.photo.path)
 
     def __str__(self):
         return '{} {}'.format(self.city, self.street)
@@ -98,8 +76,7 @@ class Box(models.Model):
         return self.snumber
 
 
-# TODO: Расмотреть ситуацию с просроченными арендами
-# Менеджер аренд для получение актуальных аренд. Не просроченных
+
 class RentManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(end__gt=timezone.now())
@@ -165,18 +142,6 @@ class Message(models.Model):
     def __str__(self):
         return "{}: {}".format(self.email, self.subject)
 
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        super().save(*args, **kwargs)
-        if is_new:
-            send_mail(
-                self.subject,
-                self.text,
-                settings.EMAIL_HOST_USER,
-                [self.email],
-                fail_silently=False,
-            )
-
     class Meta:
         verbose_name = 'Сообщение'
         verbose_name_plural = 'Сообщения'
@@ -219,36 +184,6 @@ class Order(models.Model):
 
     def __str__(self):
         return f"{self.profile.user.last_name} {self.profile.user.first_name} {self.box.snumber}"
-
-    def save(self, *args, **kwargs):
-        if self.status == 1:
-            # Если это новая запись
-            if self.pk is None:
-                end_date = self.end_rent
-                start_date = self.start_rent
-                months_difference = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month) + (0 if start_date.day > end_date.day else 1)
-                self.price = self.box.price * months_difference
-            else:
-                self.status = 2
-        if self.status == 2:
-            self.send_confirmation_email()
-            self.box.is_active = False
-        if self.status == 3:
-            rent = Rent(
-                profile=self.profile,
-                box=self.box,
-                from_city=self.from_city,
-                from_street=self.from_street,
-                status=1,
-                price=self.price,
-                start=self.start_rent,
-                end=self.end_rent
-            )
-            rent.save()
-        if self.status == 4:
-            self.box.is_active = True
-        self.box.save()
-        super().save(*args, **kwargs)
 
     def send_confirmation_email(self,):
         """ Отправка письма с подтверждением заказа. """
@@ -307,12 +242,51 @@ def save_rent_box(sender, instance, **kwargs):
         instance.box.is_active = False
     instance.box.save()
 
+
 @receiver(pre_delete, sender=Order)
 def my_model_deleted(sender, instance, **kwargs):
-    instance.box.is_active = True
+    if instance.status == 1:
+        # Если это новая запись
+        if instance.pk is None:
+            end_date = instance.end_rent
+            start_date = instance.start_rent
+            months_difference = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month) + (
+                0 if start_date.day > end_date.day else 1)
+            instance.price = instance.box.price * months_difference
+        else:
+            instance.status = 2
+    if instance.status == 2:
+        instance.send_confirmation_email()
+        instance.box.is_active = False
+    if instance.status == 3:
+        rent = Rent(
+            profile=instance.profile,
+            box=instance.box,
+            from_city=instance.from_city,
+            from_street=instance.from_street,
+            status=1,
+            price=instance.price,
+            start=instance.start_rent,
+            end=instance.end_rent
+        )
+        rent.save()
+    if instance.status == 4:
+        instance.box.is_active = True
     instance.box.save()
 
 @receiver(pre_delete, sender=Rent)
 def my_model_deleted(sender, instance, **kwargs):
     instance.box.is_active = True
     instance.box.save()
+
+
+@receiver(post_save, sender=Message)
+def send_email(sender, instance, created, **kwargs):
+    if created:
+        send_mail(
+            instance.subject,
+            instance.text,
+            settings.EMAIL_HOST_USER,
+            [instance.email],
+            fail_silently=False,
+        )
