@@ -97,3 +97,50 @@ send_mail(
 )
 #...
 ```
+## Скрипт для деплоя
+1. Напишите свою службу(демон) в /etc/systemd/system/
+К примеру предлогается создать файл self-storage.service с:
+```text
+[Service]
+WorkingDirectory=<ПУТЬ_К_ПРОЕКТУ>/selfstorage/
+ExecStart=<ПУТЬ_К_ПРОЕКТУ>/.venv/bin/python <ПУТЬ_К_ПРОЕКТУ>/selfstorage/manage.py runserver <IP_HOST>:<PORT>
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+и для celery self-storage-celery.service  
+```text
+[Unit]
+After=redis.service
+After=self-storage.service
+
+[Service]
+WorkingDirectory=<ПУТЬ_К_ПРОЕКТУ>/selfstorage/
+ExecStart=/<ПУТЬ_К_ПРОЕКТУ>/.venv/bin/celery -A selfstorage worker --beat --loglevel=info
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+2. После создание служб, можно автоматизровать развертвование проекта следующим скриптом:
+В корне проекта необходимо создать файл с расширением .sh к примеру deploy_self_storage.sh
+```shell
+#!/bin/bash
+set -e
+git pull
+<ПУТЬ_ПРОЕКТА>/.venv/bin/pip install -r requirements.txt
+<ПУТЬ_ПРОЕКТА>/.venv/bin/python <ПУТЬ_ПРОЕКТА>/selfstorage/manage.py migrate
+systemctl restart redis.service
+systemctl disable <self-storage-celery.service>
+systemctl stop <self-storage-celery.service>
+systemctl disable <self-storage.service>
+systemctl restart <self-storage.service>
+systemctl enable <self-storage.service>
+systemctl start <self-storage-celery.service>
+systemctl enable <self-storage-celery.service>
+```
+Далее далее изменить файл, сделать его выпольняемым
+```shell
+sudo chmod uga+x deploy_self_storage.sh
+```
